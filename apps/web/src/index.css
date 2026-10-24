@@ -1,0 +1,117 @@
+@import 'tailwindcss';
+@import '@fontsource-variable/rubik';
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Design tokens (docs/design/tokens.css). Raw vars flip with .dark; @theme exposes them as utilities. */
+:root {
+  --bg: #f2f3f5;
+  --surface: #ffffff;
+  --surface2: #f6f7f9;
+  --line: #e2e5ea;
+  --ink: #0e1116;
+  --muted: #596170;
+  --accent: #c6f135;
+  --accent-ink: #0e1116;
+  --pos: #0a7a4f;
+  --pos-bg: #e2f4eb;
+  --neg: #bf3f0b;
+  --neg-bg: #fcece3;
+  --warn: #8a5a00;
+  --warn-bg: #fff3d1;
+  --sk1: #e9ebef;
+  --sk2: #f5f6f8;
+  --hero-bg: #0e1116;
+  --hero-line: #262b33;
+  --hero-muted: #aeb5c0;
+}
+:root.dark {
+  --bg: #0a0c0f;
+  --surface: #13161b;
+  --surface2: #1a1e24;
+  --line: #262b33;
+  --ink: #edeff2;
+  --muted: #9aa2ae;
+  --pos: #4bdb98;
+  --pos-bg: #0f2a1e;
+  --neg: #ff9568;
+  --neg-bg: #2d1911;
+  --warn: #ffcb5c;
+  --warn-bg: #2b230f;
+  --sk1: #1c2027;
+  --sk2: #262b33;
+}
+
+@theme inline {
+  --font-sans: 'Rubik Variable', system-ui, sans-serif;
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface2: var(--surface2);
+  --color-line: var(--line);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-accent-ink: var(--accent-ink);
+  --color-pos: var(--pos);
+  --color-pos-bg: var(--pos-bg);
+  --color-neg: var(--neg);
+  --color-neg-bg: var(--neg-bg);
+  --color-warn: var(--warn);
+  --color-warn-bg: var(--warn-bg);
+  --color-hero: var(--hero-bg);
+  --color-hero-line: var(--hero-line);
+  --color-hero-muted: var(--hero-muted);
+  --radius-control: 12px;
+  --radius-card: 20px;
+  --radius-hero: 28px;
+}
+
+/* Avatar / tint palette is theme-independent (pastels with dark ink on top). */
+@theme {
+  --color-av-1: #c6f135;
+  --color-av-2: #ffb59a;
+  --color-av-3: #9cc8ff;
+  --color-av-4: #e2b6ff;
+  --color-av-5: #ffe08a;
+  --color-av-6: #9ee6cf;
+  --animate-stamp: stamp-thump 1.2s cubic-bezier(0.2, 0.9, 0.3, 1) both;
+  --animate-shimmer: shimmer 1.5s ease-in-out infinite;
+}
+
+@layer base {
+  html {
+    font-family: var(--font-sans);
+    color: var(--ink);
+    background: var(--bg);
+    font-variant-numeric: tabular-nums;
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    min-height: 100dvh;
+  }
+  :focus-visible {
+    outline: 2px solid var(--ink);
+    outline-offset: 2px;
+  }
+}
+
+@keyframes stamp-thump {
+  0% { transform: rotate(-8deg) scale(2.2); opacity: 0; }
+  16% { transform: rotate(-8deg) scale(0.92); opacity: 1; }
+  24% { transform: rotate(-8deg) scale(1.03); }
+  30%, 100% { transform: rotate(-8deg) scale(1); opacity: 1; }
+}
+@keyframes shimmer {
+  0% { background-position: 100% 0; }
+  100% { background-position: 0 0; }
+}
+
+@utility skeleton {
+  border-radius: 8px;
+  background: linear-gradient(90deg, var(--sk1) 25%, var(--sk2) 40%, var(--sk1) 60%);
+  background-size: 300% 100%;
+  animation: var(--animate-shimmer);
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}
