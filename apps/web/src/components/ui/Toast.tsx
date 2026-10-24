@@ -14,7 +14,7 @@ export function ToastViewport() {
   const { t } = useTranslation();
   const toasts = useToasts();
   return (
-    <div className="pointer-events-none fixed inset-x-4 bottom-24 z-50 flex flex-col items-center gap-2 md:bottom-6">
+    <div className="pointer-events-none fixed inset-x-4 bottom-24 z-60 flex flex-col items-center gap-2 md:bottom-6">
       {toasts.map((item) => {
         const { Icon, chip } = icon[item.kind];
         const warn = item.kind === 'warn';

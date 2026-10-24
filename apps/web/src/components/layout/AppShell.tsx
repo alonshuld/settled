@@ -32,6 +32,9 @@ function Brand() {
 export function AppShell() {
   const { t } = useTranslation();
   const active = useActive();
+  const { pathname } = useLocation();
+  // The group page brings its own sticky Settle / Add bar on phone (PhoneGroup board).
+  const ownBottomBar = /^\/groups\/(?!new\/?$)[^/]+\/?$/.test(pathname);
   const { data } = useSession();
   const name = data?.user.name || data?.user.email || '';
 
@@ -73,6 +76,7 @@ export function AppShell() {
 
       <nav
         aria-label={t('nav.main')}
+        hidden={ownBottomBar}
         className="fixed inset-x-0 bottom-0 z-40 flex items-center border-t border-line bg-surface px-3 pt-1.5 pb-[max(1.5rem,env(safe-area-inset-bottom))] md:hidden"
       >
         {[navItems[0]!, navItems[1]!].map(({ to, label, on, Icon }) => (
