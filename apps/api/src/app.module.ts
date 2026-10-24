@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { APP_FILTER, APP_GUARD } from '@nestjs/core';
+import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { LoggerModule } from 'nestjs-pino';
 import { ActivityModule } from './activity/activity.module';
 import { AuthModule } from './auth/auth.module';
@@ -12,6 +12,7 @@ import { ExpensesModule } from './expenses/expenses.module';
 import { FxModule } from './fx/fx.module';
 import { GroupsModule } from './groups/groups.module';
 import { MeModule } from './me/me.module';
+import { ResponseValidationInterceptor } from './common/interceptors/response-validation.interceptor';
 import { ApiExceptionFilter } from './common/filters/api-exception.filter';
 import { validateEnv } from './config/env';
 import { HealthController } from './health/health.controller';
@@ -49,6 +50,8 @@ import { UploadsModule } from './uploads/uploads.module';
   providers: [
     { provide: APP_FILTER, useClass: ApiExceptionFilter },
     { provide: APP_GUARD, useClass: SessionGuard },
+    // Response drift check: dev and test only, never in production
+    ...(process.env.NODE_ENV === 'production' ? [] : [{ provide: APP_INTERCEPTOR, useClass: ResponseValidationInterceptor }]),
   ],
 })
 export class AppModule {}

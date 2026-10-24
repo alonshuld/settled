@@ -600,6 +600,28 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        Config: {
+            auth: {
+                google: boolean;
+                emailOtp: boolean;
+                phoneOtp: boolean;
+                guest: boolean;
+            };
+            push: {
+                vapidPublicKey: string | null;
+            };
+            reminderChannels: ("push" | "email" | "whatsapp" | "sms")[];
+        };
+        Currency: {
+            code: string;
+            decimals: number;
+        };
+        FxRate: {
+            rate: string;
+            date: string;
+            /** @enum {string} */
+            source: "same" | "market";
+        };
         ApiError: {
             error: {
                 /** @description Stable error code, see design §4.4 */
@@ -734,7 +756,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["Config"];
                 };
             };
             /** @description Error (design §4.4). `error.code` is stable and what clients switch on. */
@@ -763,7 +785,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["Currency"][];
                 };
             };
             /** @description Error (design §4.4). `error.code` is stable and what clients switch on. */
@@ -796,7 +818,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["FxRate"];
                 };
             };
             /** @description Error (design §4.4). `error.code` is stable and what clients switch on. */
@@ -966,7 +988,9 @@ export interface operations {
                     /** @enum {string} */
                     type?: "trip" | "home" | "event" | "meal" | "gift" | "other";
                     currency?: string;
+                    /** Format: date */
                     startDate?: string | null;
+                    /** Format: date */
                     endDate?: string | null;
                 };
             };
@@ -1148,17 +1172,17 @@ export interface operations {
                     date: string;
                     receiptKey?: string | null;
                     split: {
-                        /** @constant */
+                        /** @enum {string} */
                         mode: "equal";
                         included: string[];
                     } | {
-                        /** @constant */
+                        /** @enum {string} */
                         mode: "exact";
                         amounts: {
                             [key: string]: number;
                         };
                     } | {
-                        /** @constant */
+                        /** @enum {string} */
                         mode: "shares";
                         shares: {
                             [key: string]: number;
@@ -1274,17 +1298,17 @@ export interface operations {
                     date?: string;
                     receiptKey?: string | null;
                     split?: {
-                        /** @constant */
+                        /** @enum {string} */
                         mode: "equal";
                         included: string[];
                     } | {
-                        /** @constant */
+                        /** @enum {string} */
                         mode: "exact";
                         amounts: {
                             [key: string]: number;
                         };
                     } | {
-                        /** @constant */
+                        /** @enum {string} */
                         mode: "shares";
                         shares: {
                             [key: string]: number;
@@ -1490,7 +1514,9 @@ export interface operations {
             content: {
                 "application/json": {
                     displayName?: string;
-                    gender?: ("male" | "female") | null;
+                    /** @enum {string|null} */
+                    gender?: "male" | "female" | null;
+                    /** Format: email */
                     email?: string | null;
                     phone?: string | null;
                 };
@@ -1749,7 +1775,8 @@ export interface operations {
                     amount: number;
                     currency?: string;
                     fxRate?: string | null;
-                    method?: ("bit" | "paybox" | "paypal" | "revolut" | "bank" | "cash" | "other") | null;
+                    /** @enum {string|null} */
+                    method?: "bit" | "paybox" | "paypal" | "revolut" | "bank" | "cash" | "other" | null;
                 };
             };
         };
@@ -1975,7 +2002,7 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": {
-                    /** @constant */
+                    /** @enum {string} */
                     confirm: "DELETE";
                 };
             };
@@ -2015,7 +2042,8 @@ export interface operations {
                     /** @enum {string} */
                     theme?: "light" | "dark" | "system";
                     defaultCurrency?: string;
-                    gender?: ("male" | "female") | null;
+                    /** @enum {string|null} */
+                    gender?: "male" | "female" | null;
                     contactPhone?: string | null;
                 };
             };
@@ -2215,7 +2243,7 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": {
-                    /** @constant */
+                    /** @enum {string} */
                     kind: "webpush";
                     /** Format: uri */
                     endpoint: string;
@@ -2224,7 +2252,7 @@ export interface operations {
                         auth: string;
                     };
                 } | {
-                    /** @constant */
+                    /** @enum {string} */
                     kind: "expo";
                     endpoint: string;
                 };

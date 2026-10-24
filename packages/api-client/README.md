@@ -4,12 +4,12 @@ Typed client for the Settled (Shulam) API, for the mobile app (and the web app i
 
 ## How it is built
 ```
-NestJS controllers + ZodPipe schemas
+NestJS controllers + ZodPipe schemas + @Returns response schemas
    └─ pnpm --filter @settled/api openapi        -> packages/api-client/openapi.json   (OpenAPI 3.0, committed)
         └─ pnpm --filter @settled/api-client generate   -> src/schema.ts            (openapi-typescript, committed, never edit)
              └─ pnpm --filter @settled/api-client build  -> dist/                   (tsc)
 ```
-- Request bodies and query strings come from the same Zod schemas the API validates with, so the spec cannot drift. Responses are **not typed yet** (services return plain objects): they come back as `unknown`, so cast or narrow at the call site. Adding a response schema per route is the follow-up that would close this.
+- Request bodies and query strings come from the same Zod schemas the API validates with, so the spec cannot drift. Responses are typed the same way: each handler declares `@Returns(XxxDto)` (a Zod schema, `src/<module>/<module>.dto.ts`), emitted with `io: 'output'` and named schemas (`.meta({ id })`) land in `components['schemas']`, so `unwrap(api.GET(...))` returns real types. A route that has no `@Returns` yet still comes back as `unknown`. Wire format: timestamps are ISO 8601 strings (never `Date`), calendar dates `YYYY-MM-DD`, money integer minor units plus a currency code, fx rates decimal strings. In dev and test the API validates every response against its schema, so the types are what is actually sent. See the "Response DTOs" section of the backend design doc.
 - `openapi.json` is checked in. `apps/api/test/openapi.spec.ts` fails when a route or schema changes without regenerating it, so API changes show up in review. After changing a controller run both generate commands above and commit the results.
 - Runtime is [`openapi-fetch`](https://openapi-ts.dev/openapi-fetch/) (tiny, uses the platform `fetch`, works in React Native / Expo). TanStack Query hooks are not generated; wrap calls in `useQuery`/`useMutation` in the app (or add `openapi-react-query`).
 

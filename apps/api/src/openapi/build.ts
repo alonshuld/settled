@@ -2,13 +2,15 @@ import 'reflect-metadata';
 import { RequestMethod } from '@nestjs/common';
 import { z } from 'zod';
 import { IS_PUBLIC } from '../common/decorators';
+import { getReturns } from '../common/returns';
 import { ZodPipe } from '../common/zod.pipe';
 
 /**
  * Builds the OpenAPI 3.0 spec for `/api/v1` straight from the Nest controllers (design §1, §8):
  * routes and verbs come from the decorators, request bodies and queries from the `ZodPipe` schemas
  * already used for validation, so the spec cannot drift from what the API accepts. Responses are
- * described by status only (services return plain objects, there are no response DTOs).
+ * described by the `@Returns` Zod schema of each handler (io: 'output', JSON as sent on the wire).
+ * Schemas registered with `.meta({ id: 'Name' })` become named `components/schemas`.
  *
  * Reads decorator metadata only: it never instantiates a module, so it needs no database or env.
  */
@@ -66,9 +68,31 @@ function schemaOf(proto: object, key: string, kind: number): z.ZodType | undefin
   return undefined;
 }
 
-function jsonSchema(schema: z.ZodType, io: 'input' | 'output' = 'input'): Json {
-  const { $schema: _ignored, ...rest } = z.toJSONSchema(schema, { io, unrepresentable: 'any', target: 'draft-7' }) as Json;
-  return rest;
+/** Named schemas (`.meta({ id })`) hoisted out of every converted schema, keyed by id. */
+type Defs = Record<string, Json>;
+
+function jsonSchema(schema: z.ZodType, defs: Defs, io: 'input' | 'output' = 'input'): Json {
+  const { $schema: _ignored, $defs, definitions, ...rest } = z.toJSONSchema(schema, { io, unrepresentable: 'any', target: 'openapi-3.0' }) as Json & {
+    $defs?: Defs;
+    definitions?: Defs;
+  };
+  for (const [id, def] of Object.entries({ ...$defs, ...definitions })) {
+    const known = defs[id];
+    if (known && JSON.stringify(known) !== JSON.stringify(def)) {
+      throw new Error(`Two different schemas share the OpenAPI id "${id}"; ids must be unique`);
+    }
+    defs[id] = def;
+  }
+  // Named schemas are hoisted to components/schemas, so refs must point there (zod emits `definitions` or `$defs`)
+  return JSON.parse(JSON.stringify(rest).replaceAll('"#/$defs/', '"#/components/schemas/').replaceAll('"#/definitions/', '"#/components/schemas/'));
+}
+
+function responseOf(handler: unknown, status: number, defs: Defs): Json {
+  const meta = getReturns(handler);
+  if (status === 204 || (meta && 'none' in meta)) return { description: 'No content' };
+  // Routes without @Returns stay untyped (unknown) until annotated; test/returns.spec.ts lists them
+  if (!meta) return { description: 'Success', content: { 'application/json': { schema: {} } } };
+  return { description: 'Success', content: { 'application/json': { schema: jsonSchema(meta.schema, defs, 'output') } } };
 }
 
 const lowerFirst = (s: string) => s.charAt(0).toLowerCase() + s.slice(1);
@@ -79,10 +103,21 @@ const ERROR_RESPONSE = {
   content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiError' } } },
 };
 
-export function buildOpenApi(root: ModuleRef, version = '1.0.0'): Json {
-  const paths: Record<string, Record<string, Json>> = {};
-  const operationIds = new Set<string>();
+export interface RouteInfo {
+  controller: Ctor;
+  key: string;
+  handler: (...args: never[]) => unknown;
+  verb: 'get' | 'post' | 'put' | 'patch' | 'delete';
+  /** Express-style path under /api/v1, e.g. `/groups/:groupId` */
+  route: string;
+  prefix: string;
+  isPublic: boolean;
+  status: number;
+}
 
+/** Every public-contract route (the set the spec and the response-schema enforcement test cover). */
+export function collectRoutes(root: ModuleRef): RouteInfo[] {
+  const routes: RouteInfo[] = [];
   for (const controller of collectControllers(root)) {
     const prefix = (Reflect.getMetadata(PATH, controller) as string | undefined) ?? '';
     const proto = controller.prototype as Record<string, unknown>;
@@ -91,16 +126,33 @@ export function buildOpenApi(root: ModuleRef, version = '1.0.0'): Json {
       if (key === 'constructor' || typeof handler !== 'function') continue;
       const verb = METHODS[Reflect.getMetadata(METHOD, handler) as number];
       if (!verb) continue;
-
       const sub = (Reflect.getMetadata(PATH, handler) as string | undefined) ?? '';
       const route = '/' + [prefix, sub].map((p) => p.replace(/^\/|\/$/g, '')).filter(Boolean).join('/');
       if (EXCLUDED.has(`${verb.toUpperCase()} ${route}`)) continue;
+      routes.push({
+        controller,
+        key,
+        handler: handler as RouteInfo['handler'],
+        verb,
+        route,
+        prefix,
+        isPublic: Boolean(Reflect.getMetadata(IS_PUBLIC, handler) ?? Reflect.getMetadata(IS_PUBLIC, controller)),
+        status: (Reflect.getMetadata(HTTP_CODE, handler) as number | undefined) ?? (verb === 'post' ? 201 : 200),
+      });
+    }
+  }
+  return routes;
+}
 
+export function buildOpenApi(root: ModuleRef, version = '1.0.0'): Json {
+  const paths: Record<string, Record<string, Json>> = {};
+  const operationIds = new Set<string>();
+  const defs: Defs = {};
+
+  for (const { controller, key, handler, verb, route, prefix, isPublic, status } of collectRoutes(root)) {
+    const proto = controller.prototype as object;
       const openApiPath = route.replace(/:(\w+)/g, '{$1}');
-      const isPublic = Boolean(Reflect.getMetadata(IS_PUBLIC, handler) ?? Reflect.getMetadata(IS_PUBLIC, controller));
-      const status = (Reflect.getMetadata(HTTP_CODE, handler) as number | undefined) ?? (verb === 'post' ? 201 : 200);
-
-      let operationId = lowerFirst(controller.name.replace(/Controller$/, '')) + upperFirst(key);
+      const operationId = lowerFirst(controller.name.replace(/Controller$/, '')) + upperFirst(key);
       if (operationIds.has(operationId)) throw new Error(`Duplicate operationId ${operationId}`);
       operationIds.add(operationId);
 
@@ -113,7 +165,7 @@ export function buildOpenApi(root: ModuleRef, version = '1.0.0'): Json {
 
       const query = schemaOf(proto, key, QUERY);
       if (query) {
-        const js = jsonSchema(query) as { properties?: Record<string, Json>; required?: string[] };
+        const js = jsonSchema(query, defs) as { properties?: Record<string, Json>; required?: string[] };
         for (const [name, schema] of Object.entries(js.properties ?? {})) {
           parameters.push({ name, in: 'query', required: js.required?.includes(name) ?? false, schema });
         }
@@ -124,15 +176,14 @@ export function buildOpenApi(root: ModuleRef, version = '1.0.0'): Json {
         operationId,
         tags: [prefix.split('/')[0] || 'root'],
         ...(parameters.length > 0 ? { parameters } : {}),
-        ...(body ? { requestBody: { required: true, content: { 'application/json': { schema: jsonSchema(body) } } } } : {}),
+        ...(body ? { requestBody: { required: true, content: { 'application/json': { schema: jsonSchema(body, defs) } } } } : {}),
         security: isPublic ? [] : [{ bearerAuth: [] }, { cookieAuth: [] }],
         responses: {
-          [status]: status === 204 ? { description: 'No content' } : { description: 'Success', content: { 'application/json': { schema: {} } } },
+          [status]: responseOf(handler, status, defs),
           default: ERROR_RESPONSE,
         },
       };
       (paths[openApiPath] ??= {})[verb] = op;
-    }
   }
 
   const sorted = Object.fromEntries(Object.entries(paths).sort(([a], [b]) => a.localeCompare(b)));
@@ -151,6 +202,7 @@ export function buildOpenApi(root: ModuleRef, version = '1.0.0'): Json {
         cookieAuth: { type: 'apiKey', in: 'cookie', name: 'better-auth.session_token', description: 'Web: HttpOnly session cookie.' },
       },
       schemas: {
+        ...Object.fromEntries(Object.entries(defs).sort(([a], [b]) => a.localeCompare(b))),
         ApiError: {
           type: 'object',
           required: ['error'],

@@ -1,6 +1,8 @@
 import { Controller, Get } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Public } from '../common/decorators';
+import { Returns } from '../common/returns';
+import { ConfigDto } from './config.dto';
 import type { Env } from './env';
 
 @Controller('config')
@@ -8,8 +10,9 @@ export class ConfigController {
   constructor(private readonly config: ConfigService<Env, true>) {}
 
   @Public()
+  @Returns(ConfigDto)
   @Get()
-  get() {
+  get(): ConfigDto {
     const get = <K extends keyof Env>(k: K) => this.config.get(k, { infer: true });
     return {
       auth: {

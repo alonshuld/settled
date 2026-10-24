@@ -200,7 +200,9 @@
             "description": "Success",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/Config"
+                }
               }
             }
           },
@@ -229,7 +231,12 @@
             "description": "Success",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Currency"
+                  }
+                }
               }
             }
           },
@@ -297,7 +304,9 @@
             "description": "Success",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/FxRate"
+                }
               }
             }
           },
@@ -562,28 +571,16 @@
                     "type": "string"
                   },
                   "startDate": {
-                    "anyOf": [
-                      {
-                        "type": "string",
-                        "format": "date",
-                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
+                    "nullable": true,
+                    "type": "string",
+                    "format": "date",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
                   },
                   "endDate": {
-                    "anyOf": [
-                      {
-                        "type": "string",
-                        "format": "date",
-                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
+                    "nullable": true,
+                    "type": "string",
+                    "format": "date",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
                   }
                 },
                 "additionalProperties": false
@@ -947,7 +944,8 @@
                 "properties": {
                   "amount": {
                     "type": "integer",
-                    "exclusiveMinimum": 0,
+                    "minimum": 0,
+                    "exclusiveMinimum": true,
                     "maximum": 100000000
                   },
                   "currency": {
@@ -956,15 +954,9 @@
                     "maxLength": 3
                   },
                   "fxRate": {
-                    "anyOf": [
-                      {
-                        "type": "string",
-                        "pattern": "^(?!0+(\\.0+)?$)\\d{1,10}(\\.\\d{1,10})?$"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
+                    "nullable": true,
+                    "type": "string",
+                    "pattern": "^(?!0+(\\.0+)?$)\\d{1,10}(\\.\\d{1,10})?$"
                   },
                   "description": {
                     "type": "string",
@@ -993,16 +985,10 @@
                     "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
                   },
                   "receiptKey": {
-                    "anyOf": [
-                      {
-                        "type": "string",
-                        "minLength": 1,
-                        "maxLength": 200
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
+                    "nullable": true,
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200
                   },
                   "split": {
                     "oneOf": [
@@ -1011,7 +997,9 @@
                         "properties": {
                           "mode": {
                             "type": "string",
-                            "const": "equal"
+                            "enum": [
+                              "equal"
+                            ]
                           },
                           "included": {
                             "minItems": 1,
@@ -1034,14 +1022,12 @@
                         "properties": {
                           "mode": {
                             "type": "string",
-                            "const": "exact"
+                            "enum": [
+                              "exact"
+                            ]
                           },
                           "amounts": {
                             "type": "object",
-                            "propertyNames": {
-                              "type": "string",
-                              "minLength": 1
-                            },
                             "additionalProperties": {
                               "type": "integer",
                               "minimum": 0,
@@ -1060,14 +1046,12 @@
                         "properties": {
                           "mode": {
                             "type": "string",
-                            "const": "shares"
+                            "enum": [
+                              "shares"
+                            ]
                           },
                           "shares": {
                             "type": "object",
-                            "propertyNames": {
-                              "type": "string",
-                              "minLength": 1
-                            },
                             "additionalProperties": {
                               "type": "integer",
                               "minimum": 0,
@@ -1212,7 +1196,8 @@
                 "properties": {
                   "amount": {
                     "type": "integer",
-                    "exclusiveMinimum": 0,
+                    "minimum": 0,
+                    "exclusiveMinimum": true,
                     "maximum": 100000000
                   },
                   "currency": {
@@ -1221,15 +1206,9 @@
                     "maxLength": 3
                   },
                   "fxRate": {
-                    "anyOf": [
-                      {
-                        "type": "string",
-                        "pattern": "^(?!0+(\\.0+)?$)\\d{1,10}(\\.\\d{1,10})?$"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
+                    "nullable": true,
+                    "type": "string",
+                    "pattern": "^(?!0+(\\.0+)?$)\\d{1,10}(\\.\\d{1,10})?$"
                   },
                   "description": {
                     "type": "string",
@@ -1258,16 +1237,10 @@
                     "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
                   },
                   "receiptKey": {
-                    "anyOf": [
-                      {
-                        "type": "string",
-                        "minLength": 1,
-                        "maxLength": 200
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
+                    "nullable": true,
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200
                   },
                   "split": {
                     "oneOf": [
@@ -1276,7 +1249,9 @@
                         "properties": {
                           "mode": {
                             "type": "string",
-                            "const": "equal"
+                            "enum": [
+                              "equal"
+                            ]
                           },
                           "included": {
                             "minItems": 1,
@@ -1299,14 +1274,12 @@
                         "properties": {
                           "mode": {
                             "type": "string",
-                            "const": "exact"
+                            "enum": [
+                              "exact"
+                            ]
                           },
                           "amounts": {
                             "type": "object",
-                            "propertyNames": {
-                              "type": "string",
-                              "minLength": 1
-                            },
                             "additionalProperties": {
                               "type": "integer",
                               "minimum": 0,
@@ -1325,14 +1298,12 @@
                         "properties": {
                           "mode": {
                             "type": "string",
-                            "const": "shares"
+                            "enum": [
+                              "shares"
+                            ]
                           },
                           "shares": {
                             "type": "object",
-                            "propertyNames": {
-                              "type": "string",
-                              "minLength": 1
-                            },
                             "additionalProperties": {
                               "type": "integer",
                               "minimum": 0,
@@ -1350,7 +1321,8 @@
                   },
                   "version": {
                     "type": "integer",
-                    "exclusiveMinimum": 0,
+                    "minimum": 0,
+                    "exclusiveMinimum": true,
                     "maximum": 9007199254740991
                   }
                 },
@@ -1686,42 +1658,24 @@
                     "maxLength": 60
                   },
                   "gender": {
-                    "anyOf": [
-                      {
-                        "type": "string",
-                        "enum": [
-                          "male",
-                          "female"
-                        ]
-                      },
-                      {
-                        "type": "null"
-                      }
+                    "nullable": true,
+                    "type": "string",
+                    "enum": [
+                      "male",
+                      "female"
                     ]
                   },
                   "email": {
-                    "anyOf": [
-                      {
-                        "type": "string",
-                        "maxLength": 254,
-                        "format": "email",
-                        "pattern": "^(?:[A-Za-z0-9_'+\\-]+\\.)*[A-Za-z0-9_'+\\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
+                    "nullable": true,
+                    "type": "string",
+                    "maxLength": 254,
+                    "format": "email",
+                    "pattern": "^(?:[A-Za-z0-9_'+\\-]+\\.)*[A-Za-z0-9_'+\\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
                   },
                   "phone": {
-                    "anyOf": [
-                      {
-                        "type": "string",
-                        "pattern": "^\\+[1-9]\\d{6,14}$"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
+                    "nullable": true,
+                    "type": "string",
+                    "pattern": "^\\+[1-9]\\d{6,14}$"
                   }
                 },
                 "additionalProperties": false
@@ -2236,7 +2190,8 @@
                   },
                   "amount": {
                     "type": "integer",
-                    "exclusiveMinimum": 0,
+                    "minimum": 0,
+                    "exclusiveMinimum": true,
                     "maximum": 100000000
                   },
                   "currency": {
@@ -2245,33 +2200,21 @@
                     "maxLength": 3
                   },
                   "fxRate": {
-                    "anyOf": [
-                      {
-                        "type": "string",
-                        "pattern": "^(?!0+(\\.0+)?$)\\d{1,10}(\\.\\d{1,10})?$"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
+                    "nullable": true,
+                    "type": "string",
+                    "pattern": "^(?!0+(\\.0+)?$)\\d{1,10}(\\.\\d{1,10})?$"
                   },
                   "method": {
-                    "anyOf": [
-                      {
-                        "type": "string",
-                        "enum": [
-                          "bit",
-                          "paybox",
-                          "paypal",
-                          "revolut",
-                          "bank",
-                          "cash",
-                          "other"
-                        ]
-                      },
-                      {
-                        "type": "null"
-                      }
+                    "nullable": true,
+                    "type": "string",
+                    "enum": [
+                      "bit",
+                      "paybox",
+                      "paypal",
+                      "revolut",
+                      "bank",
+                      "cash",
+                      "other"
                     ]
                   }
                 },
@@ -2645,29 +2588,17 @@
                     "type": "string"
                   },
                   "gender": {
-                    "anyOf": [
-                      {
-                        "type": "string",
-                        "enum": [
-                          "male",
-                          "female"
-                        ]
-                      },
-                      {
-                        "type": "null"
-                      }
+                    "nullable": true,
+                    "type": "string",
+                    "enum": [
+                      "male",
+                      "female"
                     ]
                   },
                   "contactPhone": {
-                    "anyOf": [
-                      {
-                        "type": "string",
-                        "pattern": "^\\+[1-9]\\d{6,14}$"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
+                    "nullable": true,
+                    "type": "string",
+                    "pattern": "^\\+[1-9]\\d{6,14}$"
                   }
                 },
                 "additionalProperties": false
@@ -2718,7 +2649,9 @@
                 "properties": {
                   "confirm": {
                     "type": "string",
-                    "const": "DELETE"
+                    "enum": [
+                      "DELETE"
+                    ]
                   }
                 },
                 "required": [
@@ -2933,63 +2866,33 @@
                 "type": "object",
                 "properties": {
                   "bitPhone": {
-                    "anyOf": [
-                      {
-                        "type": "string",
-                        "maxLength": 32,
-                        "pattern": "^\\+?[\\d\\s-]{6,20}$"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
+                    "nullable": true,
+                    "type": "string",
+                    "maxLength": 32,
+                    "pattern": "^\\+?[\\d\\s-]{6,20}$"
                   },
                   "payboxPhone": {
-                    "anyOf": [
-                      {
-                        "type": "string",
-                        "maxLength": 32,
-                        "pattern": "^\\+?[\\d\\s-]{6,20}$"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
+                    "nullable": true,
+                    "type": "string",
+                    "maxLength": 32,
+                    "pattern": "^\\+?[\\d\\s-]{6,20}$"
                   },
                   "paypalMe": {
-                    "anyOf": [
-                      {
-                        "type": "string",
-                        "maxLength": 40,
-                        "pattern": "^[A-Za-z0-9.]{1,40}$"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
+                    "nullable": true,
+                    "type": "string",
+                    "maxLength": 40,
+                    "pattern": "^[A-Za-z0-9.]{1,40}$"
                   },
                   "revolutTag": {
-                    "anyOf": [
-                      {
-                        "type": "string",
-                        "maxLength": 40,
-                        "pattern": "^@?[A-Za-z0-9_.]{1,40}$"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
+                    "nullable": true,
+                    "type": "string",
+                    "maxLength": 40,
+                    "pattern": "^@?[A-Za-z0-9_.]{1,40}$"
                   },
                   "bankDetails": {
-                    "anyOf": [
-                      {
-                        "type": "string",
-                        "maxLength": 300
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
+                    "nullable": true,
+                    "type": "string",
+                    "maxLength": 300
                   }
                 },
                 "additionalProperties": false
@@ -3044,7 +2947,9 @@
                     "properties": {
                       "kind": {
                         "type": "string",
-                        "const": "webpush"
+                        "enum": [
+                          "webpush"
+                        ]
                       },
                       "endpoint": {
                         "type": "string",
@@ -3082,7 +2987,9 @@
                     "properties": {
                       "kind": {
                         "type": "string",
-                        "const": "expo"
+                        "enum": [
+                          "expo"
+                        ]
                       },
                       "endpoint": {
                         "type": "string",
@@ -3246,7 +3153,8 @@
                   },
                   "size": {
                     "type": "integer",
-                    "exclusiveMinimum": 0,
+                    "minimum": 0,
+                    "exclusiveMinimum": true,
                     "maximum": 10485760
                   }
                 },
@@ -3306,6 +3214,108 @@
       }
     },
     "schemas": {
+      "Config": {
+        "type": "object",
+        "properties": {
+          "auth": {
+            "type": "object",
+            "properties": {
+              "google": {
+                "type": "boolean"
+              },
+              "emailOtp": {
+                "type": "boolean"
+              },
+              "phoneOtp": {
+                "type": "boolean"
+              },
+              "guest": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "google",
+              "emailOtp",
+              "phoneOtp",
+              "guest"
+            ],
+            "additionalProperties": false
+          },
+          "push": {
+            "type": "object",
+            "properties": {
+              "vapidPublicKey": {
+                "nullable": true,
+                "type": "string"
+              }
+            },
+            "required": [
+              "vapidPublicKey"
+            ],
+            "additionalProperties": false
+          },
+          "reminderChannels": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "push",
+                "email",
+                "whatsapp",
+                "sms"
+              ]
+            }
+          }
+        },
+        "required": [
+          "auth",
+          "push",
+          "reminderChannels"
+        ],
+        "additionalProperties": false
+      },
+      "Currency": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "decimals": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": [
+          "code",
+          "decimals"
+        ],
+        "additionalProperties": false
+      },
+      "FxRate": {
+        "type": "object",
+        "properties": {
+          "rate": {
+            "type": "string"
+          },
+          "date": {
+            "type": "string"
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "same",
+              "market"
+            ]
+          }
+        },
+        "required": [
+          "rate",
+          "date",
+          "source"
+        ],
+        "additionalProperties": false
+      },
       "ApiError": {
         "type": "object",
         "required": [

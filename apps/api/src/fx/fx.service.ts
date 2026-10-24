@@ -3,6 +3,7 @@ import { CURRENCIES, crossRate, isCurrency } from '@settled/core';
 import { AppError } from '../common/errors';
 import { PrismaService } from '../prisma/prisma.service';
 import { FxFeed } from './fx-feed';
+import type { CurrencyListDto } from './fx.dto';
 
 export interface ResolvedRate {
   /** Base units per 1 unit of the original currency, decimal string. */
@@ -32,7 +33,7 @@ export class FxService {
     private readonly feed: FxFeed,
   ) {}
 
-  currencies() {
+  currencies(): CurrencyListDto {
     return Object.entries(CURRENCIES)
       .map(([code, { decimals }]) => ({ code, decimals }))
       .sort((a, b) => a.code.localeCompare(b.code));
