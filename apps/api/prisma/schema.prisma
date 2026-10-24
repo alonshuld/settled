@@ -1,0 +1,343 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum GroupType {
+  trip
+  home
+  event
+  meal
+  gift
+  other
+}
+
+enum MemberRole {
+  owner
+  member
+}
+
+enum FxSource {
+  same
+  market
+  manual
+}
+
+enum Gender {
+  male
+  female
+}
+
+enum Category {
+  food
+  stay
+  transport
+  fuel
+  shopping
+  activities
+  other
+}
+
+enum SplitMode {
+  equal
+  exact
+  shares
+}
+
+enum SettlementStatus {
+  pending
+  confirmed
+  rejected
+}
+
+enum PaymentMethod {
+  bit
+  paybox
+  paypal
+  revolut
+  bank
+  cash
+  other
+}
+
+enum ReminderTone {
+  friendly
+  neutral
+  firm
+}
+
+enum ReminderChannel {
+  whatsapp
+  sms
+  email
+  push
+}
+
+enum ReminderStatus {
+  queued
+  sent
+  failed
+  handed_off
+}
+
+// Currency codes are plain strings (ISO 4217, validated against the table in packages/core),
+// not a Prisma enum, because every currency is allowed.
+enum ActivityType {
+  expense
+  payment
+  reminder
+  member
+  group
+}
+
+enum Theme {
+  light
+  dark
+  system
+}
+
+enum Locale {
+  he
+  en
+}
+
+model User {
+  // Better Auth core fields. Step 2 adds Session/Account/Verification and the phone/anonymous plugin columns.
+  id            String   @id
+  name          String
+  email         String?  @unique
+  emailVerified Boolean  @default(false)
+  image         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // App fields
+  locale          Locale    @default(he)
+  theme           Theme     @default(system)
+  defaultCurrency String    @default("ILS") @db.Char(3)
+  contactPhone    String? // unverified, E.164; for reminder links
+  gender          Gender?
+  activityReadAt  DateTime? // watermark for "unread"
+  deletedAt       DateTime?
+
+  paymentDetails    PaymentDetails?
+  notificationPrefs NotificationPrefs?
+  pushSubscriptions PushSubscription[]
+  members           Member[]
+}
+
+model PaymentDetails {
+  userId      String   @id
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bitPhone    String?
+  payboxPhone String?
+  paypalMe    String? // PayPal.me username
+  revolutTag  String? // Revolut @username
+  bankDetails String? // free text "Bank · Branch · Account no." (or IBAN)
+  updatedAt   DateTime @updatedAt
+}
+
+model NotificationPrefs {
+  userId           String  @id
+  user             User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  remindersToMe    Boolean @default(true)
+  newExpenses      Boolean @default(true) // new + edited + deleted expenses you're not involved in (§9.5.1)
+  paymentsReceived Boolean @default(true)
+  weeklySummary    Boolean @default(false)
+}
+
+model PushSubscription {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  kind      String // "webpush" | "expo"
+  endpoint  String   @unique // web push endpoint or Expo token
+  keys      Json? // web push p256dh/auth
+  createdAt DateTime @default(now())
+}
+
+model Group {
+  id          String    @id @default(cuid())
+  name        String
+  type        GroupType
+  currency    String    @db.Char(3) // base currency: balances are computed in it
+  startDate   DateTime? @db.Date
+  endDate     DateTime? @db.Date
+  createdById String
+  closedAt    DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  members     Member[]
+  invite      Invite?
+  expenses    Expense[]
+  settlements Settlement[]
+  reminders   Reminder[]
+  activities  Activity[]
+}
+
+model Invite {
+  groupId   String    @id
+  group     Group     @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  code      String    @unique // 6 chars, stored without dash, e.g. "KR74QX"
+  expiresAt DateTime?
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+}
+
+model Member {
+  id          String     @id @default(cuid())
+  groupId     String
+  group       Group      @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  userId      String? // null = placeholder ("added by name"), not yet claimed
+  user        User?      @relation(fields: [userId], references: [id], onDelete: SetNull)
+  displayName String
+  color       String // one of the avatar palette hex values
+  role        MemberRole @default(member)
+  gender      Gender? // overrides user's, for placeholders
+  inviteEmail String? // contact typed in "Name, email or phone"
+  invitePhone String?
+  sortOrder   Int // stable order; used for rounding remainder
+  joinedAt    DateTime?
+  leftAt      DateTime?
+  createdAt   DateTime   @default(now())
+
+  paidExpenses   Expense[]      @relation("PaidBy")
+  shares         ExpenseShare[]
+  settlementsOut Settlement[]   @relation("SettlementFrom")
+  settlementsIn  Settlement[]   @relation("SettlementTo")
+
+  @@unique([groupId, userId]) // a user is at most one member per group
+  @@index([userId])
+}
+
+model Expense {
+  id             String    @id @default(cuid())
+  groupId        String
+  group          Group     @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  description    String
+  category       Category
+  amount         Int // original amount, minor units of `currency`, > 0
+  currency       String    @db.Char(3)
+  fxRate         Decimal   @db.Decimal(20, 10) // base units per 1 unit of `currency`; 1 when same
+  fxSource       FxSource
+  fxDate         DateTime? @db.Date // date of the rate actually used
+  baseAmount     Int // converted to group currency; this is what balances use
+  paidByMemberId String
+  paidBy         Member    @relation("PaidBy", fields: [paidByMemberId], references: [id])
+  date           DateTime  @db.Date
+  receiptKey     String? // object key in R2
+  splitMode      SplitMode
+  createdById    String // member id
+  version        Int       @default(1)
+  deletedAt      DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  shares ExpenseShare[]
+
+  @@index([groupId, date])
+}
+
+model ExpenseShare {
+  expenseId      String
+  expense        Expense @relation(fields: [expenseId], references: [id], onDelete: Cascade)
+  memberId       String
+  member         Member  @relation(fields: [memberId], references: [id])
+  amount         Int // final computed share in the group's base currency
+  originalAmount Int? // only for splitMode = exact: what the user typed, in the expense currency
+  shares         Int? // only for splitMode = shares
+
+  @@id([expenseId, memberId])
+}
+
+model Settlement {
+  id           String           @id @default(cuid())
+  groupId      String
+  group        Group            @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  fromMemberId String // debtor (pays)
+  from         Member           @relation("SettlementFrom", fields: [fromMemberId], references: [id])
+  toMemberId   String // creditor (receives)
+  to           Member           @relation("SettlementTo", fields: [toMemberId], references: [id])
+  amount       Int // original, minor units of `currency`
+  currency     String           @db.Char(3)
+  fxRate       Decimal          @db.Decimal(20, 10)
+  fxSource     FxSource
+  baseAmount   Int // counts in balances
+  method       PaymentMethod?
+  status       SettlementStatus
+  createdById  String // member id
+  confirmedAt  DateTime?
+  createdAt    DateTime         @default(now())
+
+  @@index([groupId, status])
+}
+
+model Reminder {
+  id             String          @id @default(cuid())
+  groupId        String
+  group          Group           @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  fromMemberId   String
+  toMemberId     String
+  amount         Int // outstanding at send time, group base currency
+  tone           ReminderTone
+  channel        ReminderChannel
+  message        String // final text as sent (user may edit the template)
+  locale         Locale
+  status         ReminderStatus
+  error          String?
+  autoRepeatDays Int? // 3 when "Auto-remind" is on
+  nextRunAt      DateTime?
+  stoppedAt      DateTime?
+  parentId       String? // auto-repeat sends point at the original
+  sentAt         DateTime?
+  createdAt      DateTime        @default(now())
+
+  @@index([groupId, toMemberId])
+  @@index([nextRunAt])
+}
+
+model Activity {
+  id             String       @id @default(cuid())
+  groupId        String
+  group          Group        @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  actorMemberId  String?
+  type           ActivityType
+  event          String // e.g. "expense.created", "payment.confirmed"
+  payload        Json // snapshot for rendering (amounts, names, ids)
+  audienceUserId String? // null = all group members; set for private items (reminder to you)
+  createdAt      DateTime     @default(now())
+
+  @@index([groupId, createdAt])
+  @@index([audienceUserId, createdAt])
+}
+
+model ExchangeRate {
+  date      DateTime @db.Date
+  currency  String   @db.Char(3)
+  perUsd    Decimal  @db.Decimal(24, 10) // units of `currency` per 1 USD
+  source    String // "fawazahmed0" | "frankfurter"
+  fetchedAt DateTime @default(now())
+
+  @@id([date, currency])
+}
+
+model CronRun {
+  task      String   @id // e.g. "digest.weekly"
+  lastRunAt DateTime
+}
+
+model IdempotencyKey {
+  key        String
+  userId     String
+  route      String
+  statusCode Int
+  response   Json
+  createdAt  DateTime @default(now())
+
+  @@id([userId, key])
+}
