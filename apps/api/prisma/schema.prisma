@@ -106,14 +106,17 @@ enum Locale {
 }
 
 model User {
-  // Better Auth core fields. Step 2 adds Session/Account/Verification and the phone/anonymous plugin columns.
-  id            String   @id
-  name          String
-  email         String?  @unique
-  emailVerified Boolean  @default(false)
-  image         String?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  // Better Auth fields (core + anonymous + phoneNumber plugins). Email is nullable: guests have none.
+  id                  String   @id
+  name                String
+  email               String?  @unique
+  emailVerified       Boolean  @default(false)
+  image               String?
+  phoneNumber         String?  @unique // reserved for phone login (disabled in v1)
+  phoneNumberVerified Boolean?
+  isAnonymous         Boolean? @default(false)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
 
   // App fields
   locale          Locale    @default(he)
@@ -128,6 +131,52 @@ model User {
   notificationPrefs NotificationPrefs?
   pushSubscriptions PushSubscription[]
   members           Member[]
+  sessions          Session[]
+  accounts          Account[]
+}
+
+model Session {
+  id        String   @id
+  expiresAt DateTime
+  token     String   @unique
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+}
+
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([userId])
+}
+
+model Verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
 }
 
 model PaymentDetails {

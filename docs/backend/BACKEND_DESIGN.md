@@ -890,6 +890,13 @@ Requirement: run for free for now. Every service below has a free tier with no p
 | 4 | Guest banner wording | Changed to describe a guest account on the server | §5.2 |
 | 5 | SMS provider | None for now (zero cost). Phone login disabled; SMS reminders open the sender's own messaging app | §1, §5.1, §9.9, §13.1 |
 
+### Implementation notes (step 2, auth)
+- **Guest linking** uses Better Auth's `onLinkAccount` hook: signing in with Google or email while holding a guest session moves the guest's `Member` rows to the signed-in account, then Better Auth deletes the guest user. The result is the same as "upgrading the row", but the user id changes. If the account is already in the same group, the guest's member stays as a placeholder (`mergeGuestInto`, tested).
+- **OTP attempts:** Better Auth allows 3 wrong tries, then returns `403 TOO_MANY_ATTEMPTS` and kills the code. It does not return "tries left". Showing "2 tries left" needs either a client-side counter or a custom hook. Not done.
+- **OTP send limits** (60 s cooldown, 5/hour per destination, 20/hour per IP) are in-memory (`OtpLimiter`), applied before Better Auth's handler. A restart resets them.
+- **Guest name:** `sign-in/anonymous` takes no body, so the client signs in and then calls `PATCH /me { name }`. Until then the name is "Anonymous".
+- **Email:** Resend when `RESEND_API_KEY` is set, otherwise Mailpit's HTTP API (local).
+
 ### Still open
 - Official Bit / PayBox payment links (research task, §9.8.1).
 - Custom domain: optional, but the only likely cost.
