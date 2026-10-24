@@ -2,7 +2,7 @@ import type { ButtonHTMLAttributes } from 'react';
 import { cn } from '@/lib/cn';
 import { Spinner } from './Spinner';
 
-type Variant = 'primary' | 'ghost' | 'danger' | 'text';
+type Variant = 'primary' | 'ghost' | 'danger' | 'text' | 'ink';
 
 type Size = 'md' | 'lg';
 
@@ -10,6 +10,7 @@ type Size = 'md' | 'lg';
 const variants: Record<Variant, string> = {
   primary: 'bg-accent px-4.5 font-semibold text-accent-ink hover:brightness-95',
   ghost: 'border border-line bg-surface px-4.5 font-semibold text-ink hover:bg-surface2',
+  ink: 'bg-ink px-4.5 font-semibold text-bg hover:opacity-90',
   danger: 'border border-neg bg-transparent px-4.5 font-semibold text-neg',
   text: 'bg-transparent px-1.5 hover:bg-surface2',
 };

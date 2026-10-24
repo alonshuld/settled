@@ -14,6 +14,7 @@ export const qk = {
     all: ['me'] as const,
     dashboard: () => ['me', 'dashboard'] as const,
     stats: () => ['me', 'stats'] as const,
+    paymentDetails: () => ['me', 'payment-details'] as const,
   },
   groups: {
     all: ['groups'] as const,
@@ -24,6 +25,7 @@ export const qk = {
     balances: (id: string) => ['groups', id, 'balances'] as const,
     settle: (id: string) => ['groups', id, 'settle'] as const,
     invite: (id: string) => ['groups', id, 'invite'] as const,
+    reminders: (id: string, toMemberId?: string) => ['groups', id, 'reminders', toMemberId ?? 'all'] as const,
   },
   invites: { byCode: (code: string) => ['invites', code] as const },
   activity: {
