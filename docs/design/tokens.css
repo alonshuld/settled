@@ -1,0 +1,94 @@
+/* שולם / Settled — design tokens. Import once, put class "dark" (or data-theme="dark") on <html> for dark mode. */
+@import url('https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700;800&display=swap');
+
+:root {
+  --bg: #F2F3F5;
+  --surface: #FFFFFF;
+  --surface2: #F6F7F9;
+  --line: #E2E5EA;
+  --ink: #0E1116;
+  --muted: #596170;
+
+  --accent: #C6F135;
+  --accent-ink: #0E1116;
+
+  --pos: #0A7A4F;
+  --pos-bg: #E2F4EB;
+  --neg: #BF3F0B;
+  --neg-bg: #FCECE3;
+  --warn: #8A5A00;
+  --warn-bg: #FFF3D1;
+
+  --sk1: #E9EBEF;
+  --sk2: #F5F6F8;
+
+  --hero-bg: #0E1116;
+  --hero-line: #262B33;
+  --hero-muted: #AEB5C0;
+
+  --avatar-1: #C6F135; /* you */
+  --avatar-2: #FFB59A;
+  --avatar-3: #9CC8FF;
+  --avatar-4: #E2B6FF;
+  --avatar-5: #FFE08A;
+  --avatar-6: #9EE6CF;
+
+  --tint-trip: #9CC8FF;
+  --tint-home: #FFE08A;
+  --tint-food: #FFB59A;
+  --tint-gift: #E2B6FF;
+  --tint-activity: #9EE6CF;
+  --tint-other: #D5D9E0;
+
+  --radius-sm: 8px;
+  --radius-control: 12px;
+  --radius-card: 20px;
+  --radius-hero: 28px;
+  --radius-pill: 999px;
+
+  --shadow-pop: 0 20px 50px rgba(0, 0, 0, .22);
+  --shadow-toast: 0 10px 30px rgba(0, 0, 0, .2);
+
+  --font: 'Rubik', system-ui, sans-serif;
+}
+
+:root.dark,
+:root[data-theme="dark"] {
+  --bg: #0A0C0F;
+  --surface: #13161B;
+  --surface2: #1A1E24;
+  --line: #262B33;
+  --ink: #EDEFF2;
+  --muted: #9AA2AE;
+
+  --pos: #4BDB98;
+  --pos-bg: #0F2A1E;
+  --neg: #FF9568;
+  --neg-bg: #2D1911;
+  --warn: #FFCB5C;
+  --warn-bg: #2B230F;
+
+  --sk1: #1C2027;
+  --sk2: #262B33;
+}
+
+html { font-family: var(--font); color: var(--ink); background: var(--bg); font-variant-numeric: tabular-nums; }
+*, *::before, *::after { box-sizing: border-box; }
+[dir="rtl"] .flip { transform: scaleX(-1); }
+
+/* Stamp animation (splash, sign-in success) */
+@keyframes stamp-thump {
+  0%   { transform: rotate(-8deg) scale(2.2); opacity: 0; }
+  16%  { transform: rotate(-8deg) scale(.92); opacity: 1; }
+  24%  { transform: rotate(-8deg) scale(1.03); }
+  30%, 100% { transform: rotate(-8deg) scale(1); opacity: 1; }
+}
+/* Skeleton shimmer */
+.skeleton {
+  border-radius: var(--radius-sm);
+  background: linear-gradient(90deg, var(--sk1) 25%, var(--sk2) 40%, var(--sk1) 60%);
+  background-size: 300% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+@keyframes shimmer { 0% { background-position: 100% 0; } 100% { background-position: 0 0; } }
+@media (prefers-reduced-motion: reduce) { .skeleton { animation: none; } }

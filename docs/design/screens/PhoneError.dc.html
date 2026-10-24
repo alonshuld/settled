@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="he">
+<head>
+<meta charset="utf-8">
+<title>Phone — error sheet and toast</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:inherit}a:hover{color:inherit}
+.app{--bg:#F2F3F5;--surface:#FFFFFF;--surface2:#F6F7F9;--line:#E2E5EA;--ink:#0E1116;--muted:#596170;--accent:#C6F135;--accent-ink:#0E1116;--neg:#BF3F0B;--neg-bg:#FCECE3;--warn:#8A5A00;--warn-bg:#FFF3D1;font-family:'Rubik',system-ui,sans-serif;color:var(--ink);background:var(--bg);font-variant-numeric:tabular-nums}
+.app.dark{--bg:#0A0C0F;--surface:#13161B;--surface2:#1A1E24;--line:#262B33;--ink:#EDEFF2;--muted:#9AA2AE;--neg:#FF9568;--neg-bg:#2D1911;--warn:#FFCB5C;--warn-bg:#2B230F}
+.app *{box-sizing:border-box}
+.icon-btn{width:44px;height:44px;padding:0;border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--ink);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;font:inherit;font-weight:600;font-size:13px}
+.btn{font:inherit;font-weight:600;font-size:16px;border:0;border-radius:16px;min-height:56px;display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;width:100%}
+.spin{width:20px;height:20px;border-radius:999px;border:2.5px solid currentColor;border-right-color:transparent;animation:sp .7s linear infinite;display:inline-block}
+@keyframes sp{to{transform:rotate(360deg)}}
+@keyframes up{from{transform:translateY(40px);opacity:0}to{transform:none;opacity:1}}
+@keyframes drop{from{transform:translateY(-20px);opacity:0}to{transform:none;opacity:1}}
+.sheet{animation:up .3s cubic-bezier(.2,.9,.3,1) both}
+.toast{animation:drop .3s ease both}
+.icon-btn:focus-visible,.btn:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+</style>
+</helmet>
+<div class="app {{theme}}" dir="{{dir}}" lang="{{lang}}" style="width: 390px; height: 844px; overflow: hidden; position: relative; display: flex; flex-direction: column">
+  <div style="display: flex; align-items: center; gap: 8px; padding: 52px 16px 0">
+    <span style="flex: 1; display: flex; flex-direction: column"><span style="font-weight: 600; font-size: 16px">{{t.title}}</span><span style="font-size: 12px; color: var(--muted)">{{t.group}}</span></span>
+    <button class="icon-btn" onClick="{{toggleLang}}" aria-label="{{t.langLabel}}">{{t.langShort}}</button>
+    <button class="icon-btn" onClick="{{toggleDark}}" aria-label="{{t.themeLabel}}">
+      <sc-if value="{{isLight}}" hint-placeholder-val="{{false}}"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></sc-if>
+      <sc-if value="{{isDark}}" hint-placeholder-val="{{true}}"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></sc-if>
+    </button>
+  </div>
+  <div dir="ltr" style="text-align: center; padding: 34px 0 8px; font-size: 60px; font-weight: 700; letter-spacing: -0.03em"><span style="color: var(--muted); font-size: 30px; font-weight: 500">₪</span>360</div>
+  <div style="margin: 0 20px; min-height: 50px; border-radius: 14px; background: var(--surface); border: 1px solid var(--line); display: flex; align-items: center; justify-content: center; font-weight: 500">{{t.desc}}</div>
+  <div style="margin: 14px 20px 0; height: 120px; border-radius: 18px; background: var(--surface); border: 1px solid var(--line)"></div>
+  <div style="margin: 12px 20px 0; height: 190px; border-radius: 18px; background: var(--surface); border: 1px solid var(--line)"></div>
+
+  <sc-if value="{{showToast}}" hint-placeholder-val="{{true}}">
+    <div role="status" class="toast" style="position: absolute; top: 108px; left: 16px; right: 16px; display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-radius: 14px; background: var(--warn-bg); color: var(--warn); font-size: 14px; font-weight: 500; box-shadow: 0 10px 24px rgba(0,0,0,.15)">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 2l20 20M8.5 16.5a5 5 0 0 1 7 0M5 13a10 10 0 0 1 5.2-2.7M19 13a10 10 0 0 0-2.3-1.7M12 20h.01"/></svg>{{t.offline}}
+    </div>
+  </sc-if>
+  <sc-if value="{{showOk}}" hint-placeholder-val="{{false}}">
+    <div role="status" class="toast" style="position: absolute; top: 108px; left: 16px; right: 16px; display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-radius: 14px; background: #0E1116; color: #F2F3F5; font-size: 14px; font-weight: 500; box-shadow: 0 10px 24px rgba(0,0,0,.25)">
+      <span style="width: 24px; height: 24px; border-radius: 999px; background: #C6F135; color: #0E1116; display: inline-flex; align-items: center; justify-content: center"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>{{t.saved}}
+    </div>
+  </sc-if>
+
+  <sc-if value="{{sheet}}" hint-placeholder-val="{{true}}">
+    <div style="position: absolute; inset: 0; background: rgba(0,0,0,.55); display: flex; flex-direction: column; justify-content: flex-end">
+      <div role="alertdialog" aria-label="{{t.errTitle}}" class="sheet" style="background: var(--surface); border-radius: 28px 28px 0 0; padding: 10px 20px 30px; display: flex; flex-direction: column; gap: 16px">
+        <span style="align-self: center; width: 40px; height: 5px; border-radius: 999px; background: var(--line)"></span>
+        <span style="width: 56px; height: 56px; border-radius: 16px; background: var(--neg-bg); color: var(--neg); display: inline-flex; align-items: center; justify-content: center"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l10 18H2zM12 10v4M12 17.5h.01"/></svg></span>
+        <div style="display: flex; flex-direction: column; gap: 6px">
+          <span style="font-size: 22px; font-weight: 700">{{t.errTitle}}</span>
+          <span style="font-size: 15px; line-height: 1.55; color: var(--muted)">{{t.errBody}}</span>
+        </div>
+        <span style="font-size: 12px; color: var(--muted)">{{t.code}}</span>
+        <button class="btn" onClick="{{retry}}" aria-busy="{{busyAttr}}" style="background: var(--accent); color: var(--accent-ink)">
+          <sc-if value="{{busy}}" hint-placeholder-val="{{false}}"><span class="spin" aria-hidden="true"></span>{{t.retrying}}</sc-if>
+          <sc-if value="{{idle}}" hint-placeholder-val="{{true}}">{{t.retry}}</sc-if>
+        </button>
+        <button class="btn" onClick="{{dismiss}}" style="background: transparent; color: var(--ink); border: 1px solid var(--line)">{{t.keep}}</button>
+      </div>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"lang":{"editor":"enum","options":["he","en"],"default":"he"},"dark":{"editor":"boolean","default":true},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const s = this.state || {};
+    const lang = s.lang || this.props.lang || 'he';
+    const dark = s.dark != null ? s.dark : (this.props.dark ?? true);
+    const he = lang === 'he';
+    const t = he ? {
+      langShort: 'EN', langLabel: 'Switch to English', themeLabel: 'החלפת מצב תצוגה',
+      title: 'הוצאה חדשה', group: 'טיול לכרתים', desc: 'קוקטיילים בשקיעה',
+      offline: 'אין חיבור — ננסה שוב אוטומטית', saved: 'ההוצאה נשמרה ונוספה לקבוצה',
+      errTitle: 'לא הצלחנו לשמור', errBody: 'החיבור נפל באמצע. שום דבר לא אבד — ההוצאה שמורה כטיוטה במכשיר.',
+      code: 'קוד שגיאה: NET-408', retry: 'נסו שוב', retrying: 'מנסים שוב…', keep: 'המשך עריכה'
+    } : {
+      langShort: 'עב', langLabel: 'Switch to Hebrew', themeLabel: 'Toggle theme',
+      title: 'New expense', group: 'Crete trip', desc: 'Sunset cocktails',
+      offline: 'Offline — we’ll retry automatically', saved: 'Expense saved to the group',
+      errTitle: 'Couldn’t save that', errBody: 'Your connection dropped mid-save. Nothing’s lost — the expense is kept as a draft on this device.',
+      code: 'Error code: NET-408', retry: 'Try again', retrying: 'Trying again…', keep: 'Keep editing'
+    };
+    const sheet = s.sheet != null ? s.sheet : true;
+    const busy = !!s.busy;
+    const ok = !!s.ok;
+    return {
+      t, sheet, busy, idle: !busy, busyAttr: busy ? 'true' : 'false',
+      showToast: !ok, showOk: ok,
+      retry: () => { if (busy) return; this.setState({ busy: true }); setTimeout(() => this.setState({ busy: false, sheet: false, ok: true }), 1300); },
+      dismiss: () => this.setState({ sheet: false }),
+      dir: he ? 'rtl' : 'ltr', lang,
+      theme: dark ? 'dark' : 'light', isDark: dark, isLight: !dark,
+      toggleLang: () => this.setState({ lang: he ? 'en' : 'he' }),
+      toggleDark: () => this.setState({ dark: !dark })
+    };
+  }
+}
+</script>
+</body>
+</html>

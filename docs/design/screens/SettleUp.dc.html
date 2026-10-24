@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="he">
+<head>
+<meta charset="utf-8">
+<title>Settle up and remind</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:inherit}a:hover{color:inherit}
+.app{--bg:#F2F3F5;--surface:#FFFFFF;--surface2:#F6F7F9;--line:#E2E5EA;--ink:#0E1116;--muted:#596170;--accent:#C6F135;--accent-ink:#0E1116;--pos:#0A7A4F;--pos-bg:#E2F4EB;--neg:#BF3F0B;--neg-bg:#FCECE3;font-family:'Rubik',system-ui,sans-serif;color:var(--ink);background:var(--bg);font-variant-numeric:tabular-nums}
+.app.dark{--bg:#0A0C0F;--surface:#13161B;--surface2:#1A1E24;--line:#262B33;--ink:#EDEFF2;--muted:#9AA2AE;--pos:#4BDB98;--pos-bg:#0F2A1E;--neg:#FF9568;--neg-bg:#2D1911}
+.app *{box-sizing:border-box}
+.app a{text-decoration:none}
+.btn{font:inherit;font-weight:600;font-size:15px;border:0;border-radius:12px;min-height:44px;padding:0 18px;display:inline-flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;white-space:nowrap}
+.btn-primary{background:var(--accent);color:var(--accent-ink)}
+.btn-primary:hover{filter:brightness(.94)}
+.btn-ghost{background:var(--surface);color:var(--ink);border:1px solid var(--line)}
+.btn-ghost:hover{background:var(--surface2)}
+.btn-ink{background:var(--ink);color:var(--bg)}
+.icon-btn{width:44px;height:44px;padding:0;border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--ink);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;font:inherit;font-weight:600;font-size:13px}
+.icon-btn:hover{background:var(--surface2)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:20px}
+.lbl{font-size:14px;font-weight:500;color:var(--muted)}
+.chip{font:inherit;color:var(--ink);background:var(--surface2);border:1.5px solid var(--line);border-radius:999px;min-height:44px;padding:0 14px;display:inline-flex;align-items:center;gap:8px;cursor:pointer;font-size:14px;font-weight:500}
+.chip:hover{border-color:var(--muted)}
+.chip.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.xfer{border:1.5px solid var(--line);background:var(--surface);border-radius:18px;padding:18px;display:flex;flex-wrap:wrap;align-items:center;gap:16px}
+.xfer.sel{border-color:var(--ink);box-shadow:0 0 0 1px var(--ink)}
+.switch{width:52px;height:32px;border-radius:999px;border:0;background:var(--line);position:relative;cursor:pointer;flex:none;padding:0}
+.switch span{position:absolute;top:4px;inset-inline-start:4px;width:24px;height:24px;border-radius:999px;background:#fff;transition:inset-inline-start .15s}
+.switch.on{background:var(--pos)}
+.switch.on span{inset-inline-start:24px}
+.ta{font:inherit;font-size:15px;line-height:1.55;color:var(--ink);background:var(--surface2);border:1px solid var(--line);border-radius:14px;padding:14px;width:100%;min-height:132px;resize:vertical}
+.nav a{display:inline-flex;align-items:center;min-height:44px;padding:0 14px;border-radius:10px;font-weight:500;color:var(--muted)}
+.nav a:hover{color:var(--ink);background:var(--surface2)}
+.nav a.on{color:var(--ink);background:var(--surface2)}
+.btn:focus-visible,.icon-btn:focus-visible,.chip:focus-visible,.switch:focus-visible,a:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+[dir=rtl] .flip{transform:scaleX(-1)}
+</style>
+</helmet>
+<div class="app {{theme}}" dir="{{dir}}" lang="{{lang}}" style="min-height: 1160px">
+  <header style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; padding: 14px 32px; border-bottom: 1px solid var(--line); background: var(--surface)">
+    <a href="Home.dc.html" style="display: flex; align-items: center; gap: 10px">
+      <svg width="36" height="36" viewBox="0 0 48 48" aria-hidden="true" style="flex: none"><rect width="48" height="48" rx="13" fill="#C6F135"/><g transform="rotate(-12 24 24)"><rect x="8.5" y="14" width="31" height="20" rx="5.5" fill="none" stroke="#0E1116" stroke-width="3"/><path d="M17 24.2l4.6 4.6 9.4-9.6" fill="none" stroke="#0E1116" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></g></svg>
+      <span style="font-size: 20px; font-weight: 700">{{t.brand}}</span>
+    </a>
+    <nav class="nav" style="display: flex; gap: 4px; flex-wrap: wrap">
+      <a class="on" href="Home.dc.html">{{t.navGroups}}</a>
+      <a href="Activity.dc.html">{{t.navActivity}}</a>
+      <a href="Settings.dc.html">{{t.navSettings}}</a>
+    </nav>
+    <div style="flex: 1"></div>
+    <div style="display: flex; gap: 8px; align-items: center">
+      <button class="icon-btn" onClick="{{toggleLang}}" aria-label="{{t.langLabel}}">{{t.langShort}}</button>
+      <button class="icon-btn" onClick="{{toggleDark}}" aria-label="{{t.themeLabel}}">
+        <sc-if value="{{isLight}}" hint-placeholder-val="{{true}}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></sc-if>
+        <sc-if value="{{isDark}}" hint-placeholder-val="{{false}}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></sc-if>
+      </button>
+      <a href="Settings.dc.html" aria-label="{{t.profile}}" style="width: 44px; height: 44px; border-radius: 999px; background: #C6F135; color: #0E1116; display: inline-flex; align-items: center; justify-content: center; font-weight: 600">{{t.meInitial}}</a>
+    </div>
+  </header>
+
+  <main style="max-width: 1280px; margin: 0 auto; padding: 24px 32px 56px; display: flex; flex-direction: column; gap: 24px">
+    <div style="display: flex; flex-direction: column; gap: 10px">
+      <a href="Group.dc.html" style="align-self: flex-start; display: inline-flex; align-items: center; gap: 6px; min-height: 44px; color: var(--muted); font-weight: 500"><svg class="flip" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>{{t.back}}</a>
+      <h1 style="margin: 0; font-size: 38px; font-weight: 700; letter-spacing: -0.02em">{{t.title}}</h1>
+      <p style="margin: 0; font-size: 16px; color: var(--muted)">{{t.sub}}</p>
+    </div>
+
+    <div style="display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start">
+      <section style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column; gap: 14px">
+        <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 16px; padding: 20px 22px; border-radius: 20px; background: #0E1116; color: #F2F3F5; border: 1px solid #262B33">
+          <div style="flex: 1; min-width: 200px; display: flex; flex-direction: column; gap: 4px">
+            <span style="font-size: 14px; color: #AEB5C0">{{t.outstanding}}</span>
+            <span style="font-size: 34px; font-weight: 700; color: #C6F135">{{outstanding}}</span>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 8px; min-width: 200px; flex: 1">
+            <span style="font-size: 13px; color: #AEB5C0">{{progressLabel}}</span>
+            <span style="height: 10px; border-radius: 999px; background: #262B33; overflow: hidden; display: flex"><span style="width: {{progressW}}; background: #C6F135; border-radius: 999px"></span></span>
+          </div>
+        </div>
+
+        <sc-for list="{{xfers}}" as="x" hint-placeholder-count="3">
+          <div class="xfer {{x.sel}}">
+            <div style="display: flex; align-items: center; gap: 10px; flex: 1; min-width: 260px">
+              <span style="width: 44px; height: 44px; border-radius: 999px; background: {{x.c}}; color: #0E1116; display: inline-flex; align-items: center; justify-content: center; font-weight: 600">{{x.i}}</span>
+              <span style="display: flex; flex-direction: column; align-items: center; gap: 2px; flex: 1; max-width: 160px">
+                <span style="font-size: 18px; font-weight: 700">{{x.amount}}</span>
+                <span style="display: flex; align-items: center; width: 100%; color: var(--muted)"><span style="flex: 1; height: 2px; background: currentColor; opacity: .4"></span><svg class="flip" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></span>
+              </span>
+              <span style="width: 44px; height: 44px; border-radius: 999px; background: #C6F135; color: #0E1116; display: inline-flex; align-items: center; justify-content: center; font-weight: 600">{{t.meI}}</span>
+              <span style="display: flex; flex-direction: column; gap: 2px; margin-inline-start: 6px">
+                <span style="font-size: 16px; font-weight: 600">{{x.text}}</span>
+                <span style="font-size: 13px; color: var(--muted)">{{x.status}}</span>
+              </span>
+            </div>
+            <sc-if value="{{x.open}}" hint-placeholder-val="{{true}}">
+              <div style="display: flex; gap: 8px; flex-wrap: wrap">
+                <button class="btn btn-ghost" onClick="{{x.markPaid}}"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>{{t.markPaid}}</button>
+                <button class="btn btn-ink" onClick="{{x.select}}"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>{{t.remind}}</button>
+              </div>
+            </sc-if>
+            <sc-if value="{{x.done}}" hint-placeholder-val="{{false}}">
+              <span style="transform: rotate(-7deg); border: 2.5px solid var(--pos); color: var(--pos); border-radius: 12px; padding: 4px 14px; font-size: 20px; font-weight: 800; display: inline-flex; align-items: center; gap: 6px">{{t.stamp}}<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>
+            </sc-if>
+          </div>
+        </sc-for>
+
+        <div class="card" style="padding: 22px; display: flex; flex-direction: column; gap: 14px">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px">
+            <h2 style="margin: 0; font-size: 18px; font-weight: 600">{{t.payDetails}}</h2>
+            <a href="Settings.dc.html" style="font-size: 14px; font-weight: 600; min-height: 44px; display: inline-flex; align-items: center">{{t.edit}}</a>
+          </div>
+          <span style="font-size: 14px; color: var(--muted); margin-top: -8px">{{t.payDetailsSub}}</span>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px">
+            <div style="padding: 14px 16px; border-radius: 14px; background: var(--surface2); display: flex; flex-direction: column; gap: 4px"><span style="font-size: 13px; color: var(--muted)">Bit / PayBox</span><span dir="ltr" style="font-weight: 600; text-align: start">[YOUR PHONE]</span></div>
+            <div style="padding: 14px 16px; border-radius: 14px; background: var(--surface2); display: flex; flex-direction: column; gap: 4px"><span style="font-size: 13px; color: var(--muted)">{{t.bank}}</span><span style="font-weight: 600">[BANK · BRANCH · ACCOUNT]</span></div>
+          </div>
+        </div>
+      </section>
+
+      <aside class="card" style="flex: 1 1 380px; min-width: 0; padding: 26px; display: flex; flex-direction: column; gap: 20px">
+        <div style="display: flex; align-items: center; gap: 12px">
+          <span style="width: 44px; height: 44px; border-radius: 999px; background: {{sel.c}}; color: #0E1116; display: inline-flex; align-items: center; justify-content: center; font-weight: 600">{{sel.i}}</span>
+          <div style="display: flex; flex-direction: column; gap: 2px">
+            <h2 style="margin: 0; font-size: 20px; font-weight: 600">{{remindTitle}}</h2>
+            <span style="font-size: 14px; color: var(--muted)">{{sel.last}}</span>
+          </div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 10px">
+          <span class="lbl">{{t.tone}}</span>
+          <div style="display: flex; flex-wrap: wrap; gap: 8px">
+            <sc-for list="{{tones}}" as="o" hint-placeholder-count="3"><button class="chip {{o.on}}" onClick="{{o.pick}}" aria-pressed="{{o.pressed}}">{{o.label}}</button></sc-for>
+          </div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 10px">
+          <label class="lbl" for="msg">{{t.message}}</label>
+          <textarea id="msg" class="ta" value="{{message}}"></textarea>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 10px">
+          <span class="lbl">{{t.via}}</span>
+          <div style="display: flex; flex-wrap: wrap; gap: 8px">
+            <sc-for list="{{channels}}" as="ch" hint-placeholder-count="4"><button class="chip {{ch.on}}" onClick="{{ch.pick}}" aria-pressed="{{ch.pressed}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{ch.d}}"/></svg>{{ch.label}}</button></sc-for>
+          </div>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 14px; padding: 16px; border-radius: 14px; background: var(--surface2); border: 1px solid var(--line)">
+          <div style="flex: 1; display: flex; flex-direction: column; gap: 2px">
+            <span style="font-weight: 600; font-size: 15px">{{t.auto}}</span>
+            <span style="font-size: 13px; color: var(--muted)">{{t.autoSub}}</span>
+          </div>
+          <button class="switch {{autoOn}}" onClick="{{toggleAuto}}" role="switch" aria-checked="{{autoChecked}}" aria-label="{{t.auto}}"><span></span></button>
+        </div>
+
+        <sc-if value="{{notSent}}" hint-placeholder-val="{{true}}">
+          <button class="btn btn-primary" onClick="{{send}}" style="min-height: 54px; font-size: 16px"><svg class="flip" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4z"/></svg>{{t.send}}</button>
+        </sc-if>
+        <sc-if value="{{sent}}" hint-placeholder-val="{{false}}">
+          <div style="min-height: 54px; border-radius: 12px; background: var(--pos-bg); color: var(--pos); display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 600"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>{{sentLabel}}</div>
+        </sc-if>
+      </aside>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"lang":{"editor":"enum","options":["he","en"],"default":"he"},"dark":{"editor":"boolean","default":false},"$preview":{"width":1440,"height":1160}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const s = this.state || {};
+    const lang = s.lang || this.props.lang || 'he';
+    const dark = s.dark != null ? s.dark : !!this.props.dark;
+    const he = lang === 'he';
+    const T = {
+      he: {
+        brand: 'שולם', langShort: 'EN', langLabel: 'Switch to English', themeLabel: 'החלפת מצב תצוגה', profile: 'פרופיל', meInitial: 'א', meI: 'א',
+        navGroups: 'קבוצות', navActivity: 'פעילות', navSettings: 'הגדרות',
+        back: 'טיול לכרתים', title: 'סגירת חשבון', sub: 'חישבנו את הדרך הקצרה ביותר: 3 העברות במקום 6 התחשבנויות.',
+        outstanding: 'עוד מגיע לך', markPaid: 'סמן שהתקבל', remind: 'תזכורת', stamp: 'שולם',
+        payDetails: 'איך משלמים לך', payDetailsSub: 'מופיע בכל תזכורת, כדי שיהיה קל להעביר.', edit: 'עריכה', bank: 'העברה בנקאית',
+        tone: 'טון ההודעה', message: 'ההודעה', via: 'שליחה דרך', auto: 'תזכורת אוטומטית', autoSub: 'כל 3 ימים עד שיסומן ששולם',
+        send: 'שליחת תזכורת', tones: ['חברי', 'עניני', 'נחרץ'], channels: ['WhatsApp', 'SMS', 'אימייל', 'התראה באפליקציה']
+      },
+      en: {
+        brand: 'Settled', langShort: 'עב', langLabel: 'Switch to Hebrew', themeLabel: 'Toggle theme', profile: 'Profile', meInitial: 'A', meI: 'A',
+        navGroups: 'Groups', navActivity: 'Activity', navSettings: 'Settings',
+        back: 'Crete trip', title: 'Settle up', sub: 'We found the shortest path: 3 transfers instead of 6 back-and-forths.',
+        outstanding: 'Still owed to you', markPaid: 'Mark received', remind: 'Remind', stamp: 'Settled',
+        payDetails: 'How people pay you', payDetailsSub: 'Included in every reminder so paying is one tap.', edit: 'Edit', bank: 'Bank transfer',
+        tone: 'Tone', message: 'Message', via: 'Send via', auto: 'Auto-remind', autoSub: 'Every 3 days until marked as paid',
+        send: 'Send reminder', tones: ['Friendly', 'Neutral', 'Firm'], channels: ['WhatsApp', 'SMS', 'Email', 'In-app push']
+      }
+    };
+    const t = he ? T.he : T.en;
+    const base = he
+      ? [{ k: 'n', name: 'נועה', i: 'נ', c: '#FFB59A', amt: 900, f: true, last: 'עוד לא נשלחה תזכורת' }, { k: 'i', name: 'איתי', i: 'א', c: '#9CC8FF', amt: 900, f: false, last: 'תזכורת אחרונה לפני יומיים' }, { k: 'm', name: 'מאיה', i: 'מ', c: '#E2B6FF', amt: 500, f: true, last: '' }]
+      : [{ k: 'n', name: 'Noa', i: 'N', c: '#FFB59A', amt: 900, last: 'No reminder sent yet' }, { k: 'i', name: 'Itay', i: 'I', c: '#9CC8FF', amt: 900, last: 'Last reminded 2 days ago' }, { k: 'm', name: 'Maya', i: 'M', c: '#E2B6FF', amt: 500, last: '' }];
+    const paid = s.paid || { m: true };
+    const selIdx = s.sel ?? 0;
+    const fmt = (n) => '₪' + n.toLocaleString('en-US');
+    const xfers = base.map((p, idx) => {
+      const done = !!paid[p.k];
+      const verb = he ? (p.f ? ' מעבירה לך' : ' מעביר לך') : ' pays you';
+      return {
+        i: p.i, c: p.c, amount: fmt(p.amt),
+        text: done ? (he ? p.name + (p.f ? ' העבירה לך' : ' העביר לך') : p.name + ' paid you') : p.name + verb,
+        status: done ? (he ? 'התקבל · 19 באוק׳' : 'Received · Oct 19') : p.last,
+        open: !done, done, sel: !done && idx === selIdx ? 'sel' : '',
+        select: () => this.setState({ sel: idx, sent: false }),
+        markPaid: () => { const n = Object.assign({}, paid); n[p.k] = true; this.setState({ paid: n }); }
+      };
+    });
+    const total = base.reduce((a, p) => a + p.amt, 0);
+    const left = base.filter((p) => !paid[p.k]).reduce((a, p) => a + p.amt, 0);
+    const sp = base[selIdx];
+    const tone = s.tone ?? 0;
+    const tones = t.tones.map((label, i) => ({ label, on: i === tone ? 'on' : '', pressed: i === tone ? 'true' : 'false', pick: () => this.setState({ tone: i, sent: false }) }));
+    const msgs = he ? [
+      'היי ' + sp.name + '! תזכורת קטנה מהטיול לכרתים — נשאר להעביר לאלון ' + fmt(sp.amt) + '. אפשר בביט או בהעברה, הפרטים כאן למטה. תודה!',
+      'שלום ' + sp.name + ', לפי ההתחשבנות בקבוצה ״טיול לכרתים״ נשארה יתרה של ' + fmt(sp.amt) + ' לאלון. פרטי התשלום מצורפים.',
+      sp.name + ', עברו כבר כמה ימים מהטיול ועדיין פתוחים ' + fmt(sp.amt) + ' לאלון. אשמח שתסגור/י את זה עד סוף השבוע.'
+    ] : [
+      'Hey ' + sp.name + '! Quick nudge from the Crete trip — you still owe Alon ' + fmt(sp.amt) + '. Bit or bank transfer both work, details below. Thanks!',
+      'Hi ' + sp.name + ', per the “Crete trip” group, there’s a balance of ' + fmt(sp.amt) + ' owed to Alon. Payment details are attached.',
+      sp.name + ', it’s been a few days since the trip and ' + fmt(sp.amt) + ' to Alon is still open. Please settle it by the end of the week.'
+    ];
+    const chD = ['M21 12a8 8 0 0 1-11.6 7.1L3 21l1.9-6.4A8 8 0 1 1 21 12z', 'M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z', 'M3 5h18v14H3zM3 7l9 6 9-6', 'M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9'];
+    const ch = s.ch ?? 0;
+    const channels = t.channels.map((label, i) => ({ label, d: chD[i], on: i === ch ? 'on' : '', pressed: i === ch ? 'true' : 'false', pick: () => this.setState({ ch: i, sent: false }) }));
+    const auto = s.auto ?? true;
+    const sent = !!s.sent;
+    return {
+      t, xfers, tones, channels,
+      outstanding: fmt(left),
+      progressW: Math.round((total - left) / total * 100) + '%',
+      progressLabel: he ? 'הוחזרו ' + fmt(total - left) + ' מתוך ' + fmt(total) : fmt(total - left) + ' of ' + fmt(total) + ' paid back',
+      sel: { i: sp.i, c: sp.c, last: sp.last },
+      remindTitle: he ? 'תזכורת ל' + sp.name : 'Remind ' + sp.name,
+      message: msgs[tone],
+      autoOn: auto ? 'on' : '', autoChecked: auto ? 'true' : 'false',
+      toggleAuto: () => this.setState({ auto: !auto }),
+      sent, notSent: !sent,
+      sentLabel: he ? 'התזכורת נשלחה ל' + sp.name : 'Reminder sent to ' + sp.name,
+      send: () => this.setState({ sent: true }),
+      dir: he ? 'rtl' : 'ltr', lang,
+      theme: dark ? 'dark' : 'light', isDark: dark, isLight: !dark,
+      toggleLang: () => this.setState({ lang: he ? 'en' : 'he' }),
+      toggleDark: () => this.setState({ dark: !dark })
+    };
+  }
+}
+</script>
+</body>
+</html>

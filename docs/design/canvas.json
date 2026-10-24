@@ -1,0 +1,38 @@
+{
+  "v": 3,
+  "createdOnFiles": {"v": 1, "at": "2026-10-24T13:50:00Z"},
+  "title": "שולם — Settled",
+  "launch": {"view": "canvas"},
+  "pages": [],
+  "boards": {
+    "Main.dc.html": {"x": 0, "y": 0, "w": 1440, "h": 920, "title": "01 · Welcome & sign in", "expand": "fill", "is_interactive": true},
+    "Home.dc.html": {"x": 1520, "y": 0, "w": 1440, "h": 1080, "title": "02 · My groups", "expand": "fill", "is_interactive": true},
+    "NewGroup.dc.html": {"x": 3040, "y": 0, "w": 1440, "h": 1080, "title": "03 · New group", "expand": "fill", "is_interactive": true},
+    "Join.dc.html": {"x": 0, "y": 1200, "w": 1440, "h": 920, "title": "04 · Join a group", "expand": "fill", "is_interactive": true},
+    "Group.dc.html": {"x": 1520, "y": 1200, "w": 1440, "h": 1280, "title": "05 · Group", "expand": "fill", "is_interactive": true},
+    "AddExpense.dc.html": {"x": 3040, "y": 1200, "w": 1440, "h": 1120, "title": "06 · Add expense", "expand": "fill", "is_interactive": true},
+    "SettleUp.dc.html": {"x": 0, "y": 2600, "w": 1440, "h": 1160, "title": "07 · Settle up & remind", "expand": "fill", "is_interactive": true},
+    "Activity.dc.html": {"x": 1520, "y": 2600, "w": 1440, "h": 1040, "title": "08 · Activity", "expand": "fill", "is_interactive": true},
+    "Settings.dc.html": {"x": 3040, "y": 2600, "w": 1440, "h": 1160, "title": "09 · Settings", "expand": "fill", "is_interactive": true},
+    "PhoneLogin.dc.html": {"x": 0, "y": 4240, "w": 390, "h": 844, "title": "M1 · Sign in", "is_interactive": true, "radius": 40},
+    "PhoneHome.dc.html": {"x": 470, "y": 4240, "w": 390, "h": 844, "title": "M2 · My groups", "is_interactive": true, "radius": 40},
+    "PhoneGroup.dc.html": {"x": 940, "y": 4240, "w": 390, "h": 844, "title": "M3 · Group", "is_interactive": true, "radius": 40},
+    "PhoneAdd.dc.html": {"x": 1410, "y": 4240, "w": 390, "h": 844, "title": "M4 · Add expense", "is_interactive": true, "radius": 40},
+    "PhoneSettle.dc.html": {"x": 1880, "y": 4240, "w": 390, "h": 844, "title": "M5 · Settle & remind", "is_interactive": true, "radius": 40},
+    "PhoneVerify.dc.html": {"x": 2350, "y": 4240, "w": 390, "h": 844, "title": "M1b · Email / phone code", "is_interactive": true, "radius": 40},
+    "Logo.dc.html": {"x": 0, "y": 5640, "w": 1440, "h": 960, "title": "Logo — the stamp"},
+    "Splash.dc.html": {"x": 1520, "y": 5640, "w": 1440, "h": 900, "title": "Loading · splash", "expand": "fill", "is_interactive": true},
+    "HomeLoading.dc.html": {"x": 3040, "y": 5640, "w": 1440, "h": 1080, "title": "Loading · skeleton", "expand": "fill", "is_interactive": true},
+    "Errors.dc.html": {"x": 0, "y": 6840, "w": 1440, "h": 1100, "title": "Error pop-ups", "is_interactive": true},
+    "PhoneSplash.dc.html": {"x": 1520, "y": 6840, "w": 390, "h": 844, "title": "M · Splash", "is_interactive": true, "radius": 40},
+    "PhoneLoading.dc.html": {"x": 1990, "y": 6840, "w": 390, "h": 844, "title": "M · Skeleton", "is_interactive": true, "radius": 40},
+    "PhoneError.dc.html": {"x": 2460, "y": 6840, "w": 390, "h": 844, "title": "M · Error sheet & toast", "is_interactive": true, "radius": 40}
+  },
+  "order": ["Main.dc.html", "Home.dc.html", "NewGroup.dc.html", "Join.dc.html", "Group.dc.html", "AddExpense.dc.html", "SettleUp.dc.html", "Activity.dc.html", "Settings.dc.html", "PhoneLogin.dc.html", "PhoneHome.dc.html", "PhoneGroup.dc.html", "PhoneAdd.dc.html", "PhoneSettle.dc.html", "PhoneVerify.dc.html", "Logo.dc.html", "Splash.dc.html", "HomeLoading.dc.html", "Errors.dc.html", "PhoneSplash.dc.html", "PhoneLoading.dc.html", "PhoneError.dc.html"],
+  "notes": {
+    "titleDesktop": {"x": 0, "y": -320, "text": "Web app — desktop (fluid, collapses to phone width)", "kind": "title1", "maxW": 4480},
+    "titleMobile": {"x": 0, "y": 3920, "text": "Phone", "kind": "title1", "maxW": 2740},
+    "titleStates": {"x": 0, "y": 5320, "text": "Logo, loading & errors", "kind": "title1", "maxW": 4480}
+  },
+  "designSystems": []
+}

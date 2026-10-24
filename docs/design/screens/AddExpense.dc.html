@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="he">
+<head>
+<meta charset="utf-8">
+<title>Add expense</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:inherit}a:hover{color:inherit}
+.app{--bg:#F2F3F5;--surface:#FFFFFF;--surface2:#F6F7F9;--line:#E2E5EA;--ink:#0E1116;--muted:#596170;--accent:#C6F135;--accent-ink:#0E1116;--pos:#0A7A4F;--pos-bg:#E2F4EB;--neg:#BF3F0B;--neg-bg:#FCECE3;font-family:'Rubik',system-ui,sans-serif;color:var(--ink);background:var(--bg);font-variant-numeric:tabular-nums}
+.app.dark{--bg:#0A0C0F;--surface:#13161B;--surface2:#1A1E24;--line:#262B33;--ink:#EDEFF2;--muted:#9AA2AE;--pos:#4BDB98;--pos-bg:#0F2A1E;--neg:#FF9568;--neg-bg:#2D1911}
+.app *{box-sizing:border-box}
+.app a{text-decoration:none}
+.btn{font:inherit;font-weight:600;font-size:15px;border:0;border-radius:12px;min-height:44px;padding:0 18px;display:inline-flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;white-space:nowrap}
+.btn-primary{background:var(--accent);color:var(--accent-ink)}
+.btn-primary:hover{filter:brightness(.94)}
+.btn-ghost{background:var(--surface);color:var(--ink);border:1px solid var(--line)}
+.btn-ghost:hover{background:var(--surface2)}
+.icon-btn{width:44px;height:44px;padding:0;border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--ink);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;font:inherit;font-weight:600;font-size:13px}
+.icon-btn:hover{background:var(--surface2)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:20px}
+.input{font:inherit;font-size:16px;color:var(--ink);background:var(--surface2);border:1px solid var(--line);border-radius:12px;min-height:48px;padding:0 14px;width:100%}
+.input::placeholder{color:var(--muted)}
+.input:focus{outline:2px solid var(--accent);outline-offset:1px}
+.lbl{font-size:14px;font-weight:500;color:var(--muted)}
+.chip{font:inherit;color:var(--ink);background:var(--surface2);border:1.5px solid var(--line);border-radius:999px;min-height:44px;padding:0 14px;display:inline-flex;align-items:center;gap:8px;cursor:pointer;font-size:14px;font-weight:500}
+.chip:hover{border-color:var(--muted)}
+.chip.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.payer{font:inherit;color:var(--ink);background:transparent;border:0;display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;font-size:14px;font-weight:500;padding:4px;min-width:64px}
+.payer .ring{width:56px;height:56px;border-radius:999px;display:inline-flex;align-items:center;justify-content:center;border:2.5px solid transparent;padding:3px}
+.payer.on .ring{border-color:var(--ink)}
+.seg{font:inherit;font-size:15px;font-weight:500;color:var(--muted);background:transparent;border:0;border-radius:10px;min-height:40px;padding:0 14px;cursor:pointer;flex:1}
+.seg.on{background:var(--surface);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.14)}
+.chk{width:26px;height:26px;border-radius:8px;border:1.5px solid var(--line);display:inline-flex;align-items:center;justify-content:center;flex:none}
+.chk.on{background:var(--accent);border-color:var(--accent);color:#0E1116}
+.prow{font:inherit;color:var(--ink);background:transparent;border:0;width:100%;display:flex;align-items:center;gap:12px;padding:12px;border-radius:14px;cursor:pointer;text-align:start}
+.prow:hover{background:var(--surface2)}
+.mini{font:inherit;font-size:16px;color:var(--ink);background:var(--surface2);border:1px solid var(--line);border-radius:10px;min-height:44px;width:110px;padding:0 12px;text-align:end}
+.step{width:36px;height:36px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font:inherit;font-size:18px;cursor:pointer}
+.btn:focus-visible,.icon-btn:focus-visible,.chip:focus-visible,.payer:focus-visible,.seg:focus-visible,.prow:focus-visible,a:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+[dir=rtl] .flip{transform:scaleX(-1)}
+</style>
+</helmet>
+<div class="app {{theme}}" dir="{{dir}}" lang="{{lang}}" style="min-height: 1120px">
+  <header style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px; padding: 14px 32px; border-bottom: 1px solid var(--line); background: var(--surface)">
+    <a class="icon-btn" href="Group.dc.html" aria-label="{{t.close}}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg></a>
+    <div style="display: flex; flex-direction: column">
+      <span style="font-size: 18px; font-weight: 600">{{t.title}}</span>
+      <span style="font-size: 13px; color: var(--muted)">{{t.group}}</span>
+    </div>
+    <div style="flex: 1"></div>
+    <button class="icon-btn" onClick="{{toggleLang}}" aria-label="{{t.langLabel}}">{{t.langShort}}</button>
+    <button class="icon-btn" onClick="{{toggleDark}}" aria-label="{{t.themeLabel}}">
+      <sc-if value="{{isLight}}" hint-placeholder-val="{{false}}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></sc-if>
+      <sc-if value="{{isDark}}" hint-placeholder-val="{{true}}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></sc-if>
+    </button>
+  </header>
+
+  <main style="max-width: 1200px; margin: 0 auto; padding: 32px 32px 56px; display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-start">
+    <div style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column; gap: 16px">
+      <section class="card" style="padding: 32px; display: flex; flex-direction: column; gap: 28px">
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 8px 0 4px">
+          <label for="amt" class="lbl">{{t.amount}}</label>
+          <div dir="ltr" style="display: flex; align-items: baseline; justify-content: center; gap: 6px">
+            <span style="font-size: 40px; font-weight: 500; color: var(--muted)">₪</span>
+            <input id="amt" inputmode="decimal" value="{{amountStr}}" onInput="{{onAmount}}" style="font: inherit; font-size: 72px; font-weight: 700; letter-spacing: -0.03em; color: var(--ink); background: transparent; border: 0; width: 260px; text-align: center; outline: none">
+          </div>
+          <span style="width: 120px; height: 3px; border-radius: 3px; background: var(--accent)"></span>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 8px">
+          <label for="desc" class="lbl">{{t.what}}</label>
+          <input id="desc" class="input" value="{{t.descVal}}" style="font-size: 18px; min-height: 54px">
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 10px">
+          <span class="lbl">{{t.category}}</span>
+          <div style="display: flex; flex-wrap: wrap; gap: 8px">
+            <sc-for list="{{cats}}" as="c" hint-placeholder-count="6">
+              <button class="chip {{c.on}}" onClick="{{c.pick}}" aria-pressed="{{c.pressed}}"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{c.d}}"/></svg>{{c.label}}</button>
+            </sc-for>
+          </div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 10px">
+          <span class="lbl">{{t.paidBy}}</span>
+          <div style="display: flex; flex-wrap: wrap; gap: 12px">
+            <sc-for list="{{payers}}" as="p" hint-placeholder-count="4">
+              <button class="payer {{p.on}}" onClick="{{p.pick}}" aria-pressed="{{p.pressed}}">
+                <span class="ring"><span style="width: 100%; height: 100%; border-radius: 999px; background: {{p.c}}; color: #0E1116; display: inline-flex; align-items: center; justify-content: center; font-weight: 600; font-size: 17px">{{p.i}}</span></span>
+                {{p.name}}
+              </button>
+            </sc-for>
+          </div>
+        </div>
+
+        <div style="display: flex; flex-wrap: wrap; gap: 16px">
+          <div style="flex: 1 1 220px; display: flex; flex-direction: column; gap: 8px">
+            <label for="dt" class="lbl">{{t.date}}</label>
+            <input id="dt" class="input" value="{{t.dateVal}}">
+          </div>
+          <div style="flex: 1 1 220px; display: flex; flex-direction: column; gap: 8px">
+            <span class="lbl">{{t.receipt}}</span>
+            <button class="btn btn-ghost" style="min-height: 48px; border-style: dashed; justify-content: flex-start; color: var(--muted); font-weight: 500"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>{{t.receiptBtn}}</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="card" style="padding: 28px; display: flex; flex-direction: column; gap: 18px">
+        <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px">
+          <h2 style="margin: 0; font-size: 20px; font-weight: 600">{{t.split}}</h2>
+          <div style="display: flex; gap: 4px; padding: 4px; border-radius: 12px; background: var(--surface2); border: 1px solid var(--line); min-width: 320px">
+            <sc-for list="{{modes}}" as="m" hint-placeholder-count="3"><button class="seg {{m.on}}" onClick="{{m.pick}}">{{m.label}}</button></sc-for>
+          </div>
+        </div>
+
+        <sc-if value="{{isEqual}}" hint-placeholder-val="{{true}}">
+          <div style="display: flex; flex-direction: column; gap: 2px">
+            <sc-for list="{{rows}}" as="r" hint-placeholder-count="4">
+              <button class="prow" onClick="{{r.toggle}}" aria-pressed="{{r.pressed}}">
+                <span class="chk {{r.chk}}"><sc-if value="{{r.inc}}" hint-placeholder-val="{{true}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></sc-if></span>
+                <span style="width: 36px; height: 36px; border-radius: 999px; background: {{r.c}}; color: #0E1116; display: inline-flex; align-items: center; justify-content: center; font-weight: 600; font-size: 14px">{{r.i}}</span>
+                <span style="flex: 1; font-size: 16px; font-weight: 500">{{r.name}}</span>
+                <span style="font-size: 17px; font-weight: 600; color: {{r.color}}">{{r.share}}</span>
+              </button>
+            </sc-for>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{isExact}}" hint-placeholder-val="{{false}}">
+          <div style="display: flex; flex-direction: column; gap: 8px">
+            <sc-for list="{{rows}}" as="r" hint-placeholder-count="4">
+              <div style="display: flex; align-items: center; gap: 12px; padding: 6px 12px">
+                <span style="width: 36px; height: 36px; border-radius: 999px; background: {{r.c}}; color: #0E1116; display: inline-flex; align-items: center; justify-content: center; font-weight: 600; font-size: 14px">{{r.i}}</span>
+                <span style="flex: 1; font-size: 16px; font-weight: 500">{{r.name}}</span>
+                <span dir="ltr" style="display: inline-flex; align-items: center; gap: 6px"><span style="color: var(--muted)">₪</span><input class="mini" aria-label="{{r.name}}" value="{{r.exact}}"></span>
+              </div>
+            </sc-for>
+            <div style="display: flex; justify-content: space-between; padding: 12px; border-radius: 12px; background: var(--pos-bg); color: var(--pos); font-weight: 500; font-size: 14px"><span>{{t.exactOk}}</span><span>{{amountFmt}}</span></div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{isShares}}" hint-placeholder-val="{{false}}">
+          <div style="display: flex; flex-direction: column; gap: 8px">
+            <sc-for list="{{rows}}" as="r" hint-placeholder-count="4">
+              <div style="display: flex; align-items: center; gap: 12px; padding: 6px 12px">
+                <span style="width: 36px; height: 36px; border-radius: 999px; background: {{r.c}}; color: #0E1116; display: inline-flex; align-items: center; justify-content: center; font-weight: 600; font-size: 14px">{{r.i}}</span>
+                <span style="flex: 1; display: flex; flex-direction: column"><span style="font-size: 16px; font-weight: 500">{{r.name}}</span><span style="font-size: 13px; color: var(--muted)">{{r.shareAmt}}</span></span>
+                <button class="step" onClick="{{r.dec}}" aria-label="{{t.less}}">−</button>
+                <span style="width: 28px; text-align: center; font-size: 17px; font-weight: 600">{{r.shares}}</span>
+                <button class="step" onClick="{{r.inc1}}" aria-label="{{t.more}}">+</button>
+              </div>
+            </sc-for>
+          </div>
+        </sc-if>
+      </section>
+    </div>
+
+    <aside style="flex: 1 1 320px; min-width: 0; display: flex; flex-direction: column; gap: 16px">
+      <div class="card" style="padding: 24px; display: flex; flex-direction: column; gap: 18px">
+        <h2 style="margin: 0; font-size: 18px; font-weight: 600">{{t.summary}}</h2>
+        <div style="display: flex; flex-direction: column; gap: 12px; font-size: 15px">
+          <div style="display: flex; justify-content: space-between"><span style="color: var(--muted)">{{t.total}}</span><span style="font-weight: 600">{{amountFmt}}</span></div>
+          <div style="display: flex; justify-content: space-between"><span style="color: var(--muted)">{{t.paidByShort}}</span><span style="font-weight: 600">{{payerName}}</span></div>
+          <div style="display: flex; justify-content: space-between"><span style="color: var(--muted)">{{t.splitBetween}}</span><span style="font-weight: 600">{{splitCount}}</span></div>
+        </div>
+        <div style="padding: 16px; border-radius: 14px; background: var(--surface2); border: 1px solid var(--line); display: flex; flex-direction: column; gap: 6px">
+          <span style="font-size: 13px; color: var(--muted)">{{t.impact}}</span>
+          <span style="font-size: 16px; font-weight: 600; color: {{impactColor}}">{{impact}}</span>
+        </div>
+        <a class="btn btn-primary" href="Group.dc.html" style="min-height: 54px; font-size: 16px">{{t.save}}</a>
+        <a class="btn btn-ghost" href="Group.dc.html">{{t.cancel}}</a>
+      </div>
+    </aside>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"lang":{"editor":"enum","options":["he","en"],"default":"he"},"dark":{"editor":"boolean","default":true},"$preview":{"width":1440,"height":1120}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const s = this.state || {};
+    const lang = s.lang || this.props.lang || 'he';
+    const dark = s.dark != null ? s.dark : (this.props.dark ?? true);
+    const he = lang === 'he';
+    const T = {
+      he: {
+        langShort: 'EN', langLabel: 'Switch to English', themeLabel: 'החלפת מצב תצוגה', close: 'סגירה',
+        title: 'הוצאה חדשה', group: 'טיול לכרתים', amount: 'סכום', what: 'על מה?', descVal: 'קוקטיילים בשקיעה',
+        category: 'קטגוריה', paidBy: 'מי שילם?', date: 'תאריך', dateVal: '17 באוקטובר 2026', receipt: 'קבלה', receiptBtn: 'צילום או העלאת קבלה',
+        split: 'איך מחלקים?', exactOk: 'הסכומים מסתדרים', less: 'פחות', more: 'יותר',
+        summary: 'סיכום', total: 'סכום', paidByShort: 'שילם/ה', splitBetween: 'מתחלק בין', impact: 'ההשפעה על המאזן שלך',
+        save: 'שמירת ההוצאה', cancel: 'ביטול',
+        modes: ['שווה בשווה', 'סכומים', 'חלקים'], cats: ['אוכל', 'לינה', 'תחבורה', 'דלק', 'קניות', 'אטרקציות', 'אחר'],
+        people: 'אנשים', you: 'את/ה', notIncluded: 'לא משתתף'
+      },
+      en: {
+        langShort: 'עב', langLabel: 'Switch to Hebrew', themeLabel: 'Toggle theme', close: 'Close',
+        title: 'New expense', group: 'Crete trip', amount: 'Amount', what: 'What was it for?', descVal: 'Sunset cocktails',
+        category: 'Category', paidBy: 'Who paid?', date: 'Date', dateVal: 'Oct 17, 2026', receipt: 'Receipt', receiptBtn: 'Snap or upload a receipt',
+        split: 'How to split?', exactOk: 'Amounts add up', less: 'Less', more: 'More',
+        summary: 'Summary', total: 'Amount', paidByShort: 'Paid by', splitBetween: 'Split between', impact: 'Effect on your balance',
+        save: 'Save expense', cancel: 'Cancel',
+        modes: ['Equally', 'Exact', 'Shares'], cats: ['Food', 'Stay', 'Transport', 'Fuel', 'Shopping', 'Activities', 'Other'],
+        people: 'people', you: 'You', notIncluded: 'not included'
+      }
+    };
+    const t = he ? T.he : T.en;
+    const D = [
+      'M5 3v8a2 2 0 0 0 2 2v8M9 3v8M7 3v8M17 21V3c-2 0-3 2-3 5v5h3',
+      'M3 18V7M3 13h18v5M21 18v-5a3 3 0 0 0-3-3h-7v3',
+      'M3 17v-4l2-6h14l2 6v4H3zM3 13h18M7 17v2M17 17v2',
+      'M4 21V5a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v16M3 21h12M14 9h2a2 2 0 0 1 2 2v5a1.5 1.5 0 0 0 3 0V8l-3-3',
+      'M2 3h3l2.7 12.4a1 1 0 0 0 1 .8h9.6a1 1 0 0 0 1-.8L21 7H6',
+      'M2 18c2 0 2-1.5 4-1.5S8 18 10 18s2-1.5 4-1.5 2 1.5 4 1.5 2-1.5 4-1.5M4 14l2-5h12l2 5',
+      'M12 12h.01M19 12h.01M5 12h.01'
+    ];
+    const cat = s.cat ?? 0;
+    const cats = t.cats.map((label, i) => ({ label, d: D[i], on: i === cat ? 'on' : '', pressed: i === cat ? 'true' : 'false', pick: () => this.setState({ cat: i }) }));
+    const ppl = he
+      ? [{ name: 'אלון', i: 'א', c: '#C6F135' }, { name: 'נועה', i: 'נ', c: '#FFB59A' }, { name: 'איתי', i: 'א', c: '#9CC8FF' }, { name: 'מאיה', i: 'מ', c: '#E2B6FF' }]
+      : [{ name: 'Alon', i: 'A', c: '#C6F135' }, { name: 'Noa', i: 'N', c: '#FFB59A' }, { name: 'Itay', i: 'I', c: '#9CC8FF' }, { name: 'Maya', i: 'M', c: '#E2B6FF' }];
+    const payer = s.payer ?? 0;
+    const payers = ppl.map((p, i) => ({ ...p, name: i === 0 ? t.you : p.name, on: i === payer ? 'on' : '', pressed: i === payer ? 'true' : 'false', pick: () => this.setState({ payer: i }) }));
+    const amountStr = s.amount != null ? s.amount : '360';
+    const amount = parseFloat(String(amountStr).replace(/,/g, '')) || 0;
+    const fmt = (n) => '₪' + (Math.round(n * 100) / 100).toLocaleString('en-US', { maximumFractionDigits: 2 });
+    const inc = s.inc || [true, true, true, true];
+    const shares = s.shares || [1, 1, 1, 1];
+    const mode = s.mode ?? 0;
+    const modes = t.modes.map((label, i) => ({ label, on: i === mode ? 'on' : '', pick: () => this.setState({ mode: i }) }));
+    const nInc = inc.filter(Boolean).length;
+    const totalShares = shares.reduce((a, b) => a + b, 0) || 1;
+    const myPart = mode === 2 ? amount * shares[0] / totalShares : (mode === 1 ? amount / 4 : (inc[0] ? amount / (nInc || 1) : 0));
+    const rows = ppl.map((p, i) => ({
+      ...p, name: i === 0 ? t.you : p.name,
+      inc: inc[i], chk: inc[i] ? 'on' : '', pressed: inc[i] ? 'true' : 'false',
+      share: inc[i] ? fmt(amount / (nInc || 1)) : t.notIncluded,
+      color: inc[i] ? 'var(--ink)' : 'var(--muted)',
+      exact: String(Math.round(amount / 4 * 100) / 100),
+      shares: shares[i], shareAmt: fmt(amount * shares[i] / totalShares),
+      toggle: () => { const n = inc.slice(); n[i] = !n[i]; this.setState({ inc: n }); },
+      inc1: () => { const n = shares.slice(); n[i] = n[i] + 1; this.setState({ shares: n }); },
+      dec: () => { const n = shares.slice(); n[i] = Math.max(0, n[i] - 1); this.setState({ shares: n }); }
+    }));
+    let impact, impactColor;
+    if (payer === 0) {
+      const lent = amount - myPart;
+      impact = (he ? 'אחרים יחזירו לך ' : 'Others will owe you ') + fmt(lent);
+      impactColor = 'var(--pos)';
+    } else {
+      impact = (he ? 'תחזיר/י ל' + ppl[payer].name + ' ' : 'You’ll owe ' + ppl[payer].name + ' ') + fmt(myPart);
+      impactColor = myPart > 0 ? 'var(--neg)' : 'var(--muted)';
+    }
+    const count = mode === 0 ? nInc : (mode === 2 ? shares.filter((x) => x > 0).length : 4);
+    return {
+      t, cats, payers, modes, rows, amountStr, amountFmt: fmt(amount),
+      isEqual: mode === 0, isExact: mode === 1, isShares: mode === 2,
+      payerName: payers[payer].name, splitCount: count + ' ' + t.people,
+      impact, impactColor,
+      onAmount: (e) => this.setState({ amount: e.target.value }),
+      dir: he ? 'rtl' : 'ltr', lang,
+      theme: dark ? 'dark' : 'light', isDark: dark, isLight: !dark,
+      toggleLang: () => this.setState({ lang: he ? 'en' : 'he' }),
+      toggleDark: () => this.setState({ dark: !dark })
+    };
+  }
+}
+</script>
+</body>
+</html>

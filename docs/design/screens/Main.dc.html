@@ -1,0 +1,259 @@
+<!doctype html>
+<html lang="he">
+<head>
+<meta charset="utf-8">
+<title>Welcome and sign in</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:inherit}a:hover{color:inherit}
+.app{--bg:#F2F3F5;--surface:#FFFFFF;--surface2:#F6F7F9;--line:#E2E5EA;--ink:#0E1116;--muted:#596170;--accent:#C6F135;--accent-ink:#0E1116;--pos:#0A7A4F;--pos-bg:#E2F4EB;--neg:#BF3F0B;--neg-bg:#FCECE3;font-family:'Rubik',system-ui,sans-serif;color:var(--ink);background:var(--bg);font-variant-numeric:tabular-nums}
+.app.dark{--bg:#0A0C0F;--surface:#13161B;--surface2:#1A1E24;--line:#262B33;--ink:#EDEFF2;--muted:#9AA2AE;--pos:#4BDB98;--pos-bg:#0F2A1E;--neg:#FF9568;--neg-bg:#2D1911}
+.app *{box-sizing:border-box}
+.app a{text-decoration:none}
+.btn{font:inherit;font-weight:600;font-size:16px;border:0;border-radius:12px;min-height:54px;padding:0 18px;display:inline-flex;align-items:center;justify-content:center;gap:10px;cursor:pointer;white-space:nowrap;width:100%}
+.btn-primary{background:var(--accent);color:var(--accent-ink)}
+.btn-primary:hover{filter:brightness(.94)}
+.btn-ghost{background:var(--surface);color:var(--ink);border:1px solid var(--line)}
+.btn-ghost:hover{background:var(--surface2)}
+.btn-text{background:transparent;color:var(--ink);min-height:44px;width:auto;padding:0 6px;font-size:15px}
+.icon-btn{width:44px;height:44px;padding:0;border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--ink);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;font:inherit;font-weight:600;font-size:13px}
+.icon-btn:hover{background:var(--surface2)}
+.input{font:inherit;font-size:16px;color:var(--ink);background:var(--surface2);border:1px solid var(--line);border-radius:12px;min-height:52px;padding:0 14px;width:100%}
+.input::placeholder{color:var(--muted)}
+.input:focus{outline:2px solid var(--accent);outline-offset:1px}
+.seg{font:inherit;font-size:15px;font-weight:500;color:var(--muted);background:transparent;border:0;border-radius:10px;min-height:42px;padding:0 14px;cursor:pointer;flex:1;display:inline-flex;align-items:center;justify-content:center;gap:8px}
+.seg.on{background:var(--surface);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.14)}
+.otp{font:inherit;width:56px;height:64px;border-radius:14px;border:1.5px solid var(--line);background:var(--surface2);color:var(--ink);text-align:center;font-size:26px;font-weight:600}
+.otp:focus{outline:2px solid var(--accent);outline-offset:1px}
+.otp.err{border-color:var(--neg);background:var(--neg-bg)}
+.spin{width:20px;height:20px;border-radius:999px;border:2.5px solid currentColor;border-right-color:transparent;animation:sp .7s linear infinite;display:inline-block}
+@keyframes sp{to{transform:rotate(360deg)}}
+@keyframes stampIn{0%{transform:rotate(-9deg) scale(1.7);opacity:0}60%{transform:rotate(-9deg) scale(.94);opacity:1}100%{transform:rotate(-9deg) scale(1)}}
+.stamp-in{animation:stampIn .45s cubic-bezier(.2,.9,.3,1.2) both}
+.btn:focus-visible,.icon-btn:focus-visible,.seg:focus-visible,a:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+[dir=rtl] .flip{transform:scaleX(-1)}
+</style>
+</helmet>
+<div class="app {{theme}}" dir="{{dir}}" lang="{{lang}}" style="min-height: 920px; display: flex; flex-direction: column">
+  <header style="display: flex; align-items: center; gap: 12px; padding: 20px 32px">
+    <a href="Main.dc.html" style="display: flex; align-items: center; gap: 10px">
+      <svg width="40" height="40" viewBox="0 0 48 48" aria-hidden="true" style="flex: none"><rect width="48" height="48" rx="13" fill="#C6F135"/><g transform="rotate(-12 24 24)"><rect x="8.5" y="14" width="31" height="20" rx="5.5" fill="none" stroke="#0E1116" stroke-width="3"/><path d="M17 24.2l4.6 4.6 9.4-9.6" fill="none" stroke="#0E1116" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></g></svg>
+      <span style="font-size: 22px; font-weight: 700; letter-spacing: -0.01em">{{t.brand}}</span>
+    </a>
+    <div style="flex: 1"></div>
+    <button class="icon-btn" onClick="{{toggleLang}}" aria-label="{{t.langLabel}}">{{t.langShort}}</button>
+    <button class="icon-btn" onClick="{{toggleDark}}" aria-label="{{t.themeLabel}}">
+      <sc-if value="{{isLight}}" hint-placeholder-val="{{true}}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></sc-if>
+      <sc-if value="{{isDark}}" hint-placeholder-val="{{false}}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></sc-if>
+    </button>
+  </header>
+
+  <main style="flex: 1; display: flex; flex-wrap: wrap; gap: 24px; padding: 0 32px 32px; width: 100%; max-width: 1400px; margin: 0 auto">
+    <section style="flex: 1 1 520px; min-width: 0; background: #0E1116; color: #F2F3F5; border: 1px solid #1F242B; border-radius: 28px; padding: 56px; display: flex; flex-direction: column; justify-content: space-between; gap: 48px; overflow: hidden">
+      <div style="display: flex; flex-direction: column; gap: 20px; max-width: 560px">
+        <span style="align-self: flex-start; display: inline-flex; align-items: center; gap: 8px; height: 32px; padding: 0 14px; border-radius: 999px; background: #1C2128; color: #C6F135; font-size: 14px; font-weight: 500">{{t.chip}}</span>
+        <h1 style="margin: 0; font-size: 56px; line-height: 1.05; font-weight: 700; letter-spacing: -0.02em">{{t.h1}}</h1>
+        <p style="margin: 0; font-size: 19px; line-height: 1.55; color: #AEB5C0">{{t.sub}}</p>
+      </div>
+
+      <div style="position: relative; max-width: 460px; width: 100%">
+        <div style="background: #161A20; border: 1px solid #262C35; border-radius: 22px; padding: 22px; display: flex; flex-direction: column; gap: 14px">
+          <div style="display: flex; align-items: center; gap: 12px">
+            <span style="width: 40px; height: 40px; border-radius: 12px; background: #9CC8FF; color: #0E1116; display: inline-flex; align-items: center; justify-content: center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.8 19.2L16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z"/></svg></span>
+            <div style="display: flex; flex-direction: column">
+              <span style="font-weight: 600; font-size: 16px">{{t.demoGroup}}</span>
+              <span style="font-size: 13px; color: #9AA2AE">{{t.demoMeta}}</span>
+            </div>
+          </div>
+          <sc-for list="{{demo}}" as="row" hint-placeholder-count="3">
+            <div style="display: flex; align-items: center; gap: 10px; padding: 12px; border-radius: 14px; background: #1C2128">
+              <span style="width: 32px; height: 32px; border-radius: 999px; background: {{row.c1}}; color: #0E1116; display: inline-flex; align-items: center; justify-content: center; font-weight: 600; font-size: 13px">{{row.i1}}</span>
+              <svg class="flip" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6B7380" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+              <span style="width: 32px; height: 32px; border-radius: 999px; background: {{row.c2}}; color: #0E1116; display: inline-flex; align-items: center; justify-content: center; font-weight: 600; font-size: 13px">{{row.i2}}</span>
+              <span style="flex: 1; font-size: 14px; color: #C9CED6">{{row.label}}</span>
+              <span style="font-weight: 600; font-size: 16px">{{row.amount}}</span>
+            </div>
+          </sc-for>
+        </div>
+        <div style="position: absolute; inset-inline-end: -18px; bottom: -22px; transform: rotate(-9deg); border: 3px solid #C6F135; color: #C6F135; border-radius: 14px; padding: 6px 18px; font-size: 30px; font-weight: 800; background: #0E1116; display: flex; align-items: center; gap: 8px">{{t.stamp}}<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>
+      </div>
+    </section>
+
+    <section style="flex: 1 1 420px; min-width: 0; display: flex; align-items: center; justify-content: center; padding: 24px 8px">
+      <div style="width: 100%; max-width: 420px; display: flex; flex-direction: column; gap: 22px">
+
+        <sc-if value="{{isStart}}" hint-placeholder-val="{{true}}">
+          <div style="display: flex; flex-direction: column; gap: 22px">
+            <div style="display: flex; flex-direction: column; gap: 10px">
+              <h2 style="margin: 0; font-size: 34px; font-weight: 700; letter-spacing: -0.01em">{{t.welcome}}</h2>
+              <p style="margin: 0; font-size: 16px; line-height: 1.5; color: var(--muted)">{{t.welcomeSub}}</p>
+            </div>
+
+            <a class="btn btn-ghost" href="Home.dc.html">
+              <span style="width: 24px; height: 24px; border-radius: 999px; background: var(--ink); color: var(--bg); display: inline-flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px">G</span>
+              {{t.google}}
+            </a>
+
+            <div style="display: flex; align-items: center; gap: 14px; color: var(--muted); font-size: 14px">
+              <span style="flex: 1; height: 1px; background: var(--line)"></span>{{t.or}}<span style="flex: 1; height: 1px; background: var(--line)"></span>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 12px">
+              <div style="display: flex; gap: 4px; padding: 4px; border-radius: 12px; background: var(--surface2); border: 1px solid var(--line)">
+                <button class="seg {{mEmail}}" onClick="{{useEmail}}" aria-pressed="{{pEmail}}"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>{{t.email}}</button>
+                <button class="seg {{mPhone}}" onClick="{{usePhone}}" aria-pressed="{{pPhone}}"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="2" width="12" height="20" rx="3"/><path d="M11 18h2"/></svg>{{t.phone}}</button>
+              </div>
+              <sc-if value="{{isEmail}}" hint-placeholder-val="{{true}}">
+                <div style="display: flex; flex-direction: column; gap: 8px">
+                  <label for="em" style="font-size: 14px; font-weight: 500; color: var(--muted)">{{t.emailLabel}}</label>
+                  <input id="em" class="input" type="email" dir="ltr" placeholder="name@example.com">
+                </div>
+              </sc-if>
+              <sc-if value="{{isPhone}}" hint-placeholder-val="{{false}}">
+                <div style="display: flex; flex-direction: column; gap: 8px">
+                  <label for="ph" style="font-size: 14px; font-weight: 500; color: var(--muted)">{{t.phoneLabel}}</label>
+                  <div dir="ltr" style="display: flex; gap: 8px">
+                    <span style="min-height: 52px; padding: 0 14px; border-radius: 12px; background: var(--surface2); border: 1px solid var(--line); display: inline-flex; align-items: center; gap: 6px; font-weight: 500">IL +972</span>
+                    <input id="ph" class="input" type="tel" placeholder="50-123-4567">
+                  </div>
+                </div>
+              </sc-if>
+              <button class="btn btn-primary" onClick="{{send}}" aria-busy="{{sendingAttr}}">
+                <sc-if value="{{sending}}" hint-placeholder-val="{{false}}"><span class="spin" aria-hidden="true"></span>{{t.sending}}</sc-if>
+                <sc-if value="{{notSending}}" hint-placeholder-val="{{true}}">{{t.sendCode}}</sc-if>
+              </button>
+            </div>
+
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-top: 16px; border-top: 1px solid var(--line); flex-wrap: wrap">
+              <a href="Home.dc.html" class="btn btn-text" style="color: var(--muted); font-weight: 500">{{t.guest}}</a>
+              <a href="Join.dc.html" class="btn btn-text">{{t.haveCode}}<svg class="flip" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></a>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{isOtp}}" hint-placeholder-val="{{false}}">
+          <div style="display: flex; flex-direction: column; gap: 22px">
+            <button class="btn btn-text" onClick="{{back}}" style="align-self: flex-start; color: var(--muted); font-weight: 500"><svg class="flip" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>{{t.back}}</button>
+            <div style="display: flex; flex-direction: column; gap: 10px">
+              <h2 style="margin: 0; font-size: 32px; font-weight: 700; letter-spacing: -0.01em">{{t.otpTitle}}</h2>
+              <p style="margin: 0; font-size: 16px; line-height: 1.5; color: var(--muted)">{{otpSub}} <bdi dir="ltr" style="color: var(--ink); font-weight: 600">{{target}}</bdi></p>
+            </div>
+            <div dir="ltr" style="display: flex; gap: 8px; justify-content: space-between">
+              <sc-for list="{{digits}}" as="d" hint-placeholder-count="6"><input class="otp {{d.err}}" inputmode="numeric" maxlength="1" value="{{d.v}}" aria-label="{{d.label}}"></sc-for>
+            </div>
+            <sc-if value="{{otpError}}" hint-placeholder-val="{{false}}">
+              <div role="alert" style="display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-radius: 12px; background: var(--neg-bg); color: var(--neg); font-size: 14px; font-weight: 500">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16h.01"/></svg>{{t.wrongCode}}
+              </div>
+            </sc-if>
+            <button class="btn btn-primary" onClick="{{verify}}" aria-busy="{{verifyingAttr}}">
+              <sc-if value="{{verifying}}" hint-placeholder-val="{{false}}"><span class="spin" aria-hidden="true"></span>{{t.verifying}}</sc-if>
+              <sc-if value="{{notVerifying}}" hint-placeholder-val="{{true}}">{{t.verify}}</sc-if>
+            </button>
+            <div style="display: flex; justify-content: center; gap: 6px; font-size: 14px; color: var(--muted)">{{t.noCode}} <span style="font-weight: 600; color: var(--ink)">{{t.resendIn}} <bdi dir="ltr">0:42</bdi></span></div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{isDone}}" hint-placeholder-val="{{false}}">
+          <div style="display: flex; flex-direction: column; align-items: center; gap: 24px; text-align: center; padding: 24px 0">
+            <div class="stamp-in" style="border: 4px solid var(--pos); color: var(--pos); border-radius: 18px; padding: 10px 26px; font-size: 44px; font-weight: 800; display: flex; align-items: center; gap: 10px">{{t.stamp}}<svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>
+            <div style="display: flex; flex-direction: column; gap: 8px">
+              <h2 style="margin: 0; font-size: 30px; font-weight: 700">{{t.inTitle}}</h2>
+              <p style="margin: 0; font-size: 16px; color: var(--muted)">{{t.inSub}}</p>
+            </div>
+            <a class="btn btn-primary" href="Splash.dc.html">{{t.toGroups}}</a>
+          </div>
+        </sc-if>
+      </div>
+    </section>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"lang":{"editor":"enum","options":["he","en"],"default":"he"},"dark":{"editor":"boolean","default":false},"step":{"editor":"enum","options":["start","otp","otpError","done"],"default":"start"},"$preview":{"width":1440,"height":920}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const s = this.state || {};
+    const lang = s.lang || this.props.lang || 'he';
+    const dark = s.dark != null ? s.dark : !!this.props.dark;
+    const he = lang === 'he';
+    const propStep = this.props.step || 'start';
+    const step = s.step || (propStep === 'otpError' ? 'otp' : propStep);
+    const otpError = s.otpError != null ? s.otpError : propStep === 'otpError';
+    const method = s.method || 'email';
+    const T = {
+      he: {
+        brand: 'שולם', langShort: 'EN', langLabel: 'Switch to English', themeLabel: 'החלפת מצב תצוגה',
+        chip: 'לטיולים, לדירה, לארוחות ולכל מה שביניהם',
+        h1: 'כל אחד שילם על משהו. אנחנו נעשה את החשבון.',
+        sub: 'פותחים קבוצה לכל אירוע, רושמים מי שילם על מה — ושולם מראה בדיוק מי חייב למי, ובכמה.',
+        demoGroup: 'טיול לכרתים', demoMeta: '4 חברים · 6 הוצאות', stamp: 'שולם',
+        welcome: 'ברוכים הבאים', welcomeSub: 'בלי סיסמאות. נשלח לך קוד חד־פעמי, או שתמשיכו עם Google.',
+        google: 'המשך עם Google', or: 'או עם',
+        email: 'אימייל', phone: 'טלפון', emailLabel: 'כתובת אימייל', phoneLabel: 'מספר טלפון נייד',
+        sendCode: 'שלחו לי קוד כניסה', sending: 'שולחים…',
+        guest: 'המשך כאורח', haveCode: 'יש לי קוד הזמנה',
+        back: 'חזרה', otpTitle: 'הקלידו את הקוד', otpSubEmail: 'שלחנו קוד בן 6 ספרות אל', otpSubPhone: 'שלחנו SMS עם קוד בן 6 ספרות אל',
+        wrongCode: 'הקוד לא תואם. נשארו עוד 2 ניסיונות.', verify: 'כניסה', verifying: 'בודקים…',
+        noCode: 'לא הגיע?', resendIn: 'שליחה חוזרת בעוד',
+        inTitle: 'נכנסת!', inSub: 'מעלים את הקבוצות שלך…', toGroups: 'לקבוצות שלי', digit: 'ספרה '
+      },
+      en: {
+        brand: 'Settled', langShort: 'עב', langLabel: 'Switch to Hebrew', themeLabel: 'Toggle theme',
+        chip: 'For trips, flatmates, dinners and everything in between',
+        h1: 'Everyone paid for something. We’ll do the math.',
+        sub: 'Open a group for every occasion, log who paid for what — Settled shows exactly who owes whom, and how much.',
+        demoGroup: 'Crete trip', demoMeta: '4 members · 6 expenses', stamp: 'Settled',
+        welcome: 'Welcome', welcomeSub: 'No passwords. We’ll send you a one-time code — or continue with Google.',
+        google: 'Continue with Google', or: 'or use',
+        email: 'Email', phone: 'Phone', emailLabel: 'Email address', phoneLabel: 'Mobile number',
+        sendCode: 'Send me a login code', sending: 'Sending…',
+        guest: 'Continue as guest', haveCode: 'I have an invite code',
+        back: 'Back', otpTitle: 'Enter your code', otpSubEmail: 'We sent a 6-digit code to', otpSubPhone: 'We texted a 6-digit code to',
+        wrongCode: 'That code doesn’t match. 2 tries left.', verify: 'Sign in', verifying: 'Checking…',
+        noCode: 'Didn’t get it?', resendIn: 'Resend in',
+        inTitle: 'You’re in!', inSub: 'Loading your groups…', toGroups: 'Go to my groups', digit: 'Digit '
+      }
+    };
+    const t = he ? T.he : T.en;
+    const demo = he ? [
+      { i1: 'נ', c1: '#FFB59A', i2: 'א', c2: '#C6F135', label: 'נועה ← אלון', amount: '₪900' },
+      { i1: 'א', c1: '#9CC8FF', i2: 'א', c2: '#C6F135', label: 'איתי ← אלון', amount: '₪900' },
+      { i1: 'מ', c1: '#E2B6FF', i2: 'א', c2: '#C6F135', label: 'מאיה ← אלון', amount: '₪500' }
+    ] : [
+      { i1: 'N', c1: '#FFB59A', i2: 'A', c2: '#C6F135', label: 'Noa pays Alon', amount: '₪900' },
+      { i1: 'I', c1: '#9CC8FF', i2: 'A', c2: '#C6F135', label: 'Itay pays Alon', amount: '₪900' },
+      { i1: 'M', c1: '#E2B6FF', i2: 'A', c2: '#C6F135', label: 'Maya pays Alon', amount: '₪500' }
+    ];
+    const vals = ['4', '8', '2', '9', '1', otpError ? '7' : ''];
+    const digits = vals.map((v, i) => ({ v, err: otpError ? 'err' : '', label: t.digit + (i + 1) }));
+    const sending = !!s.sending, verifying = !!s.verifying;
+    return {
+      t, demo, digits,
+      isStart: step === 'start', isOtp: step === 'otp', isDone: step === 'done', otpError,
+      isEmail: method === 'email', isPhone: method === 'phone',
+      mEmail: method === 'email' ? 'on' : '', mPhone: method === 'phone' ? 'on' : '',
+      pEmail: method === 'email' ? 'true' : 'false', pPhone: method === 'phone' ? 'true' : 'false',
+      useEmail: () => this.setState({ method: 'email' }), usePhone: () => this.setState({ method: 'phone' }),
+      otpSub: method === 'email' ? t.otpSubEmail : t.otpSubPhone,
+      target: method === 'email' ? 'alon@example.com' : '+972 50-•••-4567',
+      sending, notSending: !sending, sendingAttr: sending ? 'true' : 'false',
+      verifying, notVerifying: !verifying, verifyingAttr: verifying ? 'true' : 'false',
+      send: () => { if (sending) return; this.setState({ sending: true }); setTimeout(() => this.setState({ sending: false, step: 'otp', otpError: false }), 1100); },
+      verify: () => { if (verifying) return; this.setState({ verifying: true }); setTimeout(() => this.setState({ verifying: false, step: 'done' }), 1100); },
+      back: () => this.setState({ step: 'start', otpError: false }),
+      dir: he ? 'rtl' : 'ltr', lang,
+      theme: dark ? 'dark' : 'light', isDark: dark, isLight: !dark,
+      toggleLang: () => this.setState({ lang: he ? 'en' : 'he' }),
+      toggleDark: () => this.setState({ dark: !dark })
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="he">
+<head>
+<meta charset="utf-8">
+<title>Error pop-ups</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:inherit}a:hover{color:inherit}
+.app{--bg:#F2F3F5;--surface:#FFFFFF;--surface2:#F6F7F9;--line:#E2E5EA;--ink:#0E1116;--muted:#596170;--accent:#C6F135;--accent-ink:#0E1116;--pos:#0A7A4F;--pos-bg:#E2F4EB;--neg:#BF3F0B;--neg-bg:#FCECE3;--warn:#8A5A00;--warn-bg:#FFF3D1;--scrim:#C9CDD4;--ghost:#DADDE2;font-family:'Rubik',system-ui,sans-serif;color:var(--ink);background:var(--bg)}
+.app.dark{--bg:#0A0C0F;--surface:#13161B;--surface2:#1A1E24;--line:#262B33;--ink:#EDEFF2;--muted:#9AA2AE;--pos:#4BDB98;--pos-bg:#0F2A1E;--neg:#FF9568;--neg-bg:#2D1911;--warn:#FFCB5C;--warn-bg:#2B230F;--scrim:#05070A;--ghost:#161A20}
+.app *{box-sizing:border-box}
+.btn{font:inherit;font-weight:600;font-size:15px;border:0;border-radius:12px;min-height:46px;padding:0 16px;display:inline-flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;white-space:nowrap;flex:1}
+.btn-primary{background:var(--accent);color:var(--accent-ink)}
+.btn-ghost{background:var(--surface);color:var(--ink);border:1px solid var(--line)}
+.icon-btn{width:44px;height:44px;padding:0;border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--ink);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;font:inherit;font-weight:600;font-size:13px}
+.spin{width:18px;height:18px;border-radius:999px;border:2.5px solid currentColor;border-right-color:transparent;animation:sp .7s linear infinite;display:inline-block}
+@keyframes sp{to{transform:rotate(360deg)}}
+.btn:focus-visible,.icon-btn:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+</style>
+</helmet>
+<div class="app {{theme}}" dir="{{dir}}" lang="{{lang}}" style="width: 1440px; height: 1100px; box-sizing: border-box; padding: 48px 56px; display: flex; flex-direction: column; gap: 24px">
+  <div style="display: flex; align-items: center; gap: 12px">
+    <h1 style="margin: 0; font-size: 32px; font-weight: 700; letter-spacing: -0.01em; flex: 1">{{t.title}}</h1>
+    <button class="icon-btn" onClick="{{toggleLang}}" aria-label="{{t.langLabel}}">{{t.langShort}}</button>
+    <button class="icon-btn" onClick="{{toggleDark}}" aria-label="{{t.themeLabel}}">
+      <sc-if value="{{isLight}}" hint-placeholder-val="{{true}}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></sc-if>
+      <sc-if value="{{isDark}}" hint-placeholder-val="{{false}}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg></sc-if>
+    </button>
+  </div>
+
+  <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; flex: 1">
+    <sc-for list="{{dialogs}}" as="d" hint-placeholder-count="6">
+      <div style="position: relative; border-radius: 24px; overflow: hidden; background: var(--ghost); display: flex; align-items: center; justify-content: center; padding: 24px">
+        <div aria-hidden="true" style="position: absolute; inset: 24px; display: flex; flex-direction: column; gap: 12px; opacity: .55">
+          <span style="height: 18px; width: 40%; border-radius: 6px; background: var(--line)"></span>
+          <span style="height: 60px; border-radius: 14px; background: var(--line)"></span>
+          <span style="height: 60px; border-radius: 14px; background: var(--line)"></span>
+          <span style="height: 60px; border-radius: 14px; background: var(--line)"></span>
+        </div>
+        <div aria-hidden="true" style="position: absolute; inset: 0; background: var(--scrim); opacity: .55"></div>
+        <div role="alertdialog" aria-label="{{d.title}}" style="position: relative; width: 100%; max-width: 360px; background: var(--surface); border: 1px solid var(--line); border-radius: 22px; padding: 24px; display: flex; flex-direction: column; gap: 14px; box-shadow: 0 20px 50px rgba(0,0,0,.22)">
+          <span style="width: 48px; height: 48px; border-radius: 14px; background: {{d.bg}}; color: {{d.fg}}; display: inline-flex; align-items: center; justify-content: center">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{d.icon}}"/></svg>
+          </span>
+          <div style="display: flex; flex-direction: column; gap: 6px">
+            <span style="font-size: 19px; font-weight: 600">{{d.title}}</span>
+            <span style="font-size: 14px; line-height: 1.55; color: var(--muted)">{{d.body}}</span>
+          </div>
+          <div style="display: flex; gap: 8px; margin-top: 4px">
+            <sc-if value="{{d.hasSecondary}}" hint-placeholder-val="{{true}}"><button class="btn btn-ghost" onClick="{{d.dismiss}}">{{d.secondary}}</button></sc-if>
+            <button class="btn btn-primary" onClick="{{d.act}}" aria-busy="{{d.busyAttr}}">
+              <sc-if value="{{d.busy}}" hint-placeholder-val="{{false}}"><span class="spin" aria-hidden="true"></span></sc-if>
+              <sc-if value="{{d.idle}}" hint-placeholder-val="{{true}}">{{d.primary}}</sc-if>
+            </button>
+          </div>
+        </div>
+      </div>
+    </sc-for>
+  </div>
+
+  <div style="display: flex; flex-wrap: wrap; gap: 14px; align-items: center">
+    <span style="font-size: 13px; font-weight: 600; color: var(--muted); letter-spacing: 0.06em; margin-inline-end: 8px">{{t.toasts}}</span>
+    <div role="alert" style="display: flex; align-items: center; gap: 12px; padding: 10px 10px 10px 16px; border-radius: 14px; background: #0E1116; color: #F2F3F5; box-shadow: 0 10px 30px rgba(0,0,0,.2); min-height: 56px">
+      <span style="width: 28px; height: 28px; border-radius: 999px; background: #3A1A0E; color: #FF9568; display: inline-flex; align-items: center; justify-content: center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 7v6M12 17h.01"/></svg></span>
+      <span style="font-size: 15px">{{t.toastErr}}</span>
+      <button class="btn" style="flex: none; min-height: 38px; background: #1F242B; color: #C6F135; font-size: 14px">{{t.retry}}</button>
+    </div>
+    <div role="status" style="display: flex; align-items: center; gap: 12px; padding: 10px 16px; border-radius: 14px; background: #0E1116; color: #F2F3F5; box-shadow: 0 10px 30px rgba(0,0,0,.2); min-height: 56px">
+      <span style="width: 28px; height: 28px; border-radius: 999px; background: #C6F135; color: #0E1116; display: inline-flex; align-items: center; justify-content: center"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>
+      <span style="font-size: 15px">{{t.toastOk}}</span>
+    </div>
+    <div role="status" style="display: flex; align-items: center; gap: 12px; padding: 10px 16px; border-radius: 14px; background: var(--warn-bg); color: var(--warn); min-height: 56px; font-weight: 500">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 2l20 20M8.5 16.5a5 5 0 0 1 7 0M5 13a10 10 0 0 1 5.2-2.7M19 13a10 10 0 0 0-2.3-1.7M12 20h.01"/></svg>
+      <span style="font-size: 15px">{{t.toastOffline}}</span>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"lang":{"editor":"enum","options":["he","en"],"default":"he"},"dark":{"editor":"boolean","default":false},"$preview":{"width":1440,"height":1100}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const s = this.state || {};
+    const lang = s.lang || this.props.lang || 'he';
+    const dark = s.dark != null ? s.dark : !!this.props.dark;
+    const he = lang === 'he';
+    const I = {
+      wifi: 'M2 2l20 20M8.5 16.5a5 5 0 0 1 7 0M5 13a10 10 0 0 1 5.2-2.7M19 13a10 10 0 0 0-2.3-1.7M2 8.8a15 15 0 0 1 4.2-2.6M22 8.8A15 15 0 0 0 10.7 5M12 20h.01',
+      alert: 'M12 3l10 18H2zM12 10v4M12 17.5h.01',
+      link: 'M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7M3 3l18 18',
+      send: 'M22 2L11 13M22 2l-7 20-4-9-9-4z',
+      lock: 'M5 11h14v10H5zM8 11V7a4 4 0 0 1 8 0v4',
+      coin: 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM12 8v8M9.5 10.5h4a1.5 1.5 0 0 1 0 3h-3'
+    };
+    const neg = ['var(--neg-bg)', 'var(--neg)'], warn = ['var(--warn-bg)', 'var(--warn)'], neu = ['var(--surface2)', 'var(--ink)'];
+    const raw = he ? [
+      [I.wifi, neu, 'אין חיבור לאינטרנט', 'השינויים שלך נשמרו במכשיר ויסונכרנו ברגע שהחיבור יחזור.', 'נסו שוב', ''],
+      [I.alert, neg, 'לא הצלחנו לשמור את ההוצאה', 'משהו השתבש אצלנו. הטיוטה שמורה — אפשר לנסות שוב בעוד רגע.', 'נסו שוב', 'המשך עריכה'],
+      [I.link, warn, 'קישור ההזמנה פג תוקף', 'בקשו מאלון קישור חדש, או הקלידו קוד הזמנה ידנית.', 'הזנת קוד', 'לדף הבית'],
+      [I.send, neg, 'התזכורת לא נשלחה', 'המספר של נועה לא מחובר ל־WhatsApp. רוצה לשלוח ב־SMS או במייל?', 'שליחה ב־SMS', 'ביטול'],
+      [I.lock, neu, 'פג תוקף ההתחברות', 'לביטחונך, צריך להתחבר מחדש. שום דבר לא נמחק.', 'התחברות מחדש', ''],
+      [I.coin, warn, 'אי אפשר לעזוב עדיין', 'יש לך יתרה פתוחה של ₪1,800 ב״טיול לכרתים״. סגרו חשבון לפני שיוצאים מהקבוצה.', 'לסגירת חשבון', 'ביטול']
+    ] : [
+      [I.wifi, neu, 'No internet connection', 'Your changes are saved on this device and will sync as soon as you’re back online.', 'Try again', ''],
+      [I.alert, neg, 'Couldn’t save the expense', 'Something went wrong on our side. Your draft is kept — try again in a moment.', 'Try again', 'Keep editing'],
+      [I.link, warn, 'This invite link expired', 'Ask Alon for a new link, or type an invite code instead.', 'Enter a code', 'Go home'],
+      [I.send, neg, 'Reminder wasn’t sent', 'Noa’s number isn’t on WhatsApp. Send it by SMS or email instead?', 'Send by SMS', 'Cancel'],
+      [I.lock, neu, 'Your session expired', 'For your security, please sign in again. Nothing was lost.', 'Sign in again', ''],
+      [I.coin, warn, 'You can’t leave yet', 'You still have an open balance of ₪1,800 in “Crete trip”. Settle up before leaving the group.', 'Settle up', 'Cancel']
+    ];
+    const busyIdx = s.busy;
+    const dialogs = raw.map(([icon, tone, title, body, primary, secondary], i) => ({
+      icon, bg: tone[0], fg: tone[1], title, body, primary, secondary, hasSecondary: !!secondary,
+      busy: busyIdx === i, idle: busyIdx !== i, busyAttr: busyIdx === i ? 'true' : 'false',
+      act: () => { this.setState({ busy: i }); setTimeout(() => this.setState({ busy: null }), 1200); },
+      dismiss: () => {}
+    }));
+    const t = he
+      ? { title: 'הודעות שגיאה', toasts: 'הודעות קצרות', toastErr: 'לא הצלחנו לטעון את הפעילות', retry: 'נסו שוב', toastOk: 'התזכורת נשלחה לנועה', toastOffline: 'אין חיבור — מוצגים נתונים שמורים', langShort: 'EN', langLabel: 'Switch to English', themeLabel: 'החלפת מצב תצוגה' }
+      : { title: 'Error pop-ups', toasts: 'TOASTS', toastErr: 'Couldn’t load activity', retry: 'Retry', toastOk: 'Reminder sent to Noa', toastOffline: 'Offline — showing saved data', langShort: 'עב', langLabel: 'Switch to Hebrew', themeLabel: 'Toggle theme' };
+    return {
+      t, dialogs,
+      dir: he ? 'rtl' : 'ltr', lang,
+      theme: dark ? 'dark' : 'light', isDark: dark, isLight: !dark,
+      toggleLang: () => this.setState({ lang: he ? 'en' : 'he' }),
+      toggleDark: () => this.setState({ dark: !dark })
+    };
+  }
+}
+</script>
+</body>
+</html>
