@@ -6,12 +6,15 @@ import { AuthModule } from './auth/auth.module';
 import { ConfigController } from './config/config.controller';
 import { SessionGuard } from './common/guards/session.guard';
 import { EmailModule } from './email/email.module';
+import { ExpensesModule } from './expenses/expenses.module';
+import { FxModule } from './fx/fx.module';
 import { GroupsModule } from './groups/groups.module';
 import { MeModule } from './me/me.module';
 import { ApiExceptionFilter } from './common/filters/api-exception.filter';
 import { validateEnv } from './config/env';
 import { HealthController } from './health/health.controller';
 import { PrismaModule } from './prisma/prisma.module';
+import { UploadsModule } from './uploads/uploads.module';
 
 @Module({
   imports: [
@@ -28,6 +31,9 @@ import { PrismaModule } from './prisma/prisma.module';
     AuthModule,
     MeModule,
     GroupsModule,
+    FxModule,
+    ExpensesModule,
+    UploadsModule,
   ],
   controllers: [HealthController, ConfigController],
   providers: [

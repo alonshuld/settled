@@ -5,6 +5,7 @@ import {
   convert,
   crossRate,
   decimalsOf,
+  expenseDiff,
   formatInviteCode,
   generateInviteCode,
   isCurrency,
@@ -183,5 +184,58 @@ describe('invite codes', () => {
   });
   it('generates valid codes', () => {
     for (let i = 0; i < 50; i++) expect(parseInviteCode(generateInviteCode())).not.toBeNull();
+  });
+});
+
+describe('expenseDiff', () => {
+  const base = {
+    description: 'Dinner',
+    category: 'food',
+    amount: 48000,
+    currency: 'ILS',
+    fxRate: '1',
+    baseAmount: 48000,
+    paidByMemberId: 'noa',
+    date: '2026-10-17',
+    splitMode: 'equal',
+    receiptKey: null,
+    shares: [
+      { memberId: 'noa', amount: 24000 },
+      { memberId: 'itay', amount: 24000 },
+    ],
+  };
+
+  it('reports changed fields and per-member balance moves', () => {
+    const after = {
+      ...base,
+      amount: 52000,
+      baseAmount: 52000,
+      paidByMemberId: 'itay',
+      shares: [
+        { memberId: 'noa', amount: 26000 },
+        { memberId: 'itay', amount: 26000 },
+      ],
+    };
+    const d = expenseDiff(base, after);
+    expect(Object.keys(d.fields).sort()).toEqual(['amount', 'baseAmount', 'paidByMemberId', 'shares']);
+    expect(d.fields.amount).toEqual([48000, 52000]);
+    // noa: +24000 → −26000, itay: −24000 → +26000
+    expect(d.netChanges).toEqual([
+      { memberId: 'noa', before: 24000, after: -26000 },
+      { memberId: 'itay', before: -24000, after: 26000 },
+    ]);
+  });
+
+  it('reports nothing for an identical expense', () => {
+    expect(expenseDiff(base, { ...base })).toEqual({ fields: {}, netChanges: [] });
+  });
+
+  it('treats delete as every effect going to zero', () => {
+    const d = expenseDiff(base, null);
+    expect(d.fields).toEqual({});
+    expect(d.netChanges).toEqual([
+      { memberId: 'noa', before: 24000, after: 0 },
+      { memberId: 'itay', before: -24000, after: 0 },
+    ]);
   });
 });

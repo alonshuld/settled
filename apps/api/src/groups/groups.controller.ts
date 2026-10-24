@@ -1,8 +1,9 @@
-import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post, Query, UseGuards, UseInterceptors } from '@nestjs/common';
 import { isCurrency } from '@settled/core';
 import { z } from 'zod';
 import { CurrentMember, CurrentUser, Public, type GroupMember, type SessionUser } from '../common/decorators';
 import { GroupMemberGuard } from '../common/guards/group-member.guard';
+import { IdempotencyInterceptor } from '../common/interceptors/idempotency.interceptor';
 import { ZodPipe } from '../common/zod.pipe';
 import { GroupsService } from './groups.service';
 import { InvitesService } from './invites.service';
@@ -60,6 +61,7 @@ export class GroupsController {
     return this.groups.list(user.id, q.status);
   }
 
+  @UseInterceptors(IdempotencyInterceptor)
   @Post()
   create(@CurrentUser() user: SessionUser, @Body(new ZodPipe(createGroup)) body: z.infer<typeof createGroup>) {
     return this.groups.create(user.id, user.name, body);
@@ -69,6 +71,12 @@ export class GroupsController {
   @Get(':groupId')
   get(@CurrentUser() user: SessionUser, @Param('groupId') groupId: string) {
     return this.groups.detail(groupId, user.id);
+  }
+
+  @UseGuards(GroupMemberGuard)
+  @Get(':groupId/balances')
+  balances(@CurrentMember() me: GroupMember) {
+    return this.groups.balanceView(me.groupId);
   }
 
   @UseGuards(GroupMemberGuard)
@@ -156,6 +164,7 @@ export class InvitesController {
   }
 
   @HttpCode(200)
+  @UseInterceptors(IdempotencyInterceptor)
   @Post('invites/:code/join')
   join(
     @CurrentUser() user: SessionUser,

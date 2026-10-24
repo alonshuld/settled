@@ -13,6 +13,11 @@ const schema = z.object({
   RESEND_API_KEY: z.string().optional(),
   EMAIL_FROM: z.string().default('Shulam <onboarding@resend.dev>'),
   MAILPIT_URL: z.string().url().default('http://localhost:8025'),
+  // Receipts: Cloudflare R2 (S3 API). Unset = receipt uploads answer 503 UPLOADS_UNAVAILABLE.
+  R2_ACCOUNT_ID: z.string().optional(),
+  R2_ACCESS_KEY_ID: z.string().optional(),
+  R2_SECRET_ACCESS_KEY: z.string().optional(),
+  R2_BUCKET: z.string().optional(),
   // Phone OTP is built in step 2 but stays off until an SMS provider exists.
   AUTH_PHONE_OTP_ENABLED: z
     .enum(['true', 'false'])

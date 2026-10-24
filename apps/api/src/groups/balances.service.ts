@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { computeBalances, type MemberBalance } from '@settled/core';
+import { computeBalances, simplifyDebts, type MemberBalance } from '@settled/core';
 import { PrismaService } from '../prisma/prisma.service';
 
 export interface GroupBalances {
@@ -50,6 +50,28 @@ export class BalancesService {
       });
     }
     return out;
+  }
+
+  /** `GET /groups/:id/balances` (design §9.7): balances, simplified transfers and the category breakdown. */
+  async detail(groupId: string, currency: string) {
+    const [b, byCategory] = await Promise.all([
+      this.forGroup(groupId),
+      this.prisma.expense.groupBy({
+        by: ['category'],
+        where: { groupId, deletedAt: null },
+        _sum: { baseAmount: true },
+      }),
+    ]);
+    return {
+      currency,
+      totalSpent: b.totalSpent,
+      members: b.balances,
+      transfers: simplifyDebts(b.balances),
+      byCategory: byCategory
+        .map((c) => ({ category: c.category, amount: c._sum.baseAmount ?? 0 }))
+        .sort((x, y) => y.amount - x.amount),
+      expenseCount: b.expenseCount,
+    };
   }
 
   async forGroup(groupId: string): Promise<GroupBalances> {

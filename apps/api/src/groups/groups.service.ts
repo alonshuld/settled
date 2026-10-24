@@ -192,6 +192,11 @@ export class GroupsService {
     };
   }
 
+  async balanceView(groupId: string) {
+    const group = await this.prisma.group.findUniqueOrThrow({ where: { id: groupId }, select: { currency: true } });
+    return this.balances.detail(groupId, group.currency);
+  }
+
   async update(me: GroupMember, input: UpdateGroup) {
     this.requireOwner(me);
     const group = await this.openGroup(me.groupId);

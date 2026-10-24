@@ -906,6 +906,16 @@ Requirement: run for free for now. Every service below has a free tier with no p
 - **Preview rate limit** (30/min per IP) is in-memory, like the OTP limits.
 - Group, member and join changes write `Activity` rows (`group.*`, `member.*`) in the same transaction.
 
+### Implementation notes (step 4, expenses)
+- **FX:** `FxService.rateFor` reads `ExchangeRate`, fetches a missing day from fawazahmed0 (Frankfurter as fallback), and stores every currency in the core table in USD terms. If both feeds fail it uses the newest cached day on or before the date (or the oldest cached one for a backdated expense), and `fxDate` shows the day actually used. A failed fetch is not retried for 60 s; a successful one is not repeated for an hour. `FX_RATE_UNAVAILABLE` only happens with an empty cache. `FxService.ensureToday()` is ready for the `fx.daily` cron task (step 5).
+- **Rate on edit:** amount, currency or date edits re-resolve the market rate; a manual rate survives such edits unless the currency changes or a new `fxRate` is sent. `fxRate: null` switches back to the market rate. Edits that touch none of the three keep the locked rate.
+- **Edit/delete activity:** `expense.updated` / `expense.deleted` payloads hold `actor`, `diff` (payer shown by name), `netChanges` per member and `affectedMemberIds`. An edit that changes nothing writes no activity and no notification (the version still increments). **Push/email fan-out and the 5-minute collapse of repeat edits are step 6**; the payload already has what the recipient rules in §9.5.1 need.
+- **Receipts:** `POST /uploads/receipts` presigns an R2 `PUT` with content type and length in the signature. Without `R2_*` env it answers `503 UPLOADS_UNAVAILABLE`. `GET /expenses/:id` returns a 15-minute `receiptUrl`. The orphan cleanup job is step 5.
+- **Idempotency:** `IdempotencyInterceptor` covers `POST /groups/:id/expenses`, `POST /groups` and `POST /invites/:code/join`. Only successful responses are stored. Reusing a key on another route returns `400`. Concurrent duplicates wait on the first request (in-process, fine for one process). Settlements and reminders will use it in step 5.
+- **Dashboard:** `overall` now converts other currencies at the latest market rate and sets `approximate: true`; only currencies with no rate at all land in `excludedCurrencies`.
+- **Balances:** `GET /groups/:id/balances` returns members, simplified transfers and `byCategory`. Only confirmed settlements count, so it matches the dashboard.
+- **Left members:** new expenses require active members; an edit or delete may still reference members who have left if they were already in that expense.
+
 ### Still open
 - Official Bit / PayBox payment links (research task, §9.8.1).
 - Custom domain: optional, but the only likely cost.

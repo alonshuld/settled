@@ -19,6 +19,7 @@ export type ErrorCode =
   | 'MEMBER_HAS_ACTIVITY'
   | 'REMINDER_CHANNEL_UNAVAILABLE'
   | 'RATE_LIMITED'
+  | 'UPLOADS_UNAVAILABLE'
   | 'INTERNAL';
 
 export class AppError extends Error {

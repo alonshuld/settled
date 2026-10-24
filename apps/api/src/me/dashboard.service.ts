@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { simplifyDebts } from '@settled/core';
+import { convert, simplifyDebts } from '@settled/core';
+import { FxService } from '../fx/fx.service';
 import { BalancesService, netOf } from '../groups/balances.service';
 import { GroupsService } from '../groups/groups.service';
 import { PrismaService } from '../prisma/prisma.service';
@@ -24,6 +25,7 @@ export class DashboardService {
     private readonly prisma: PrismaService,
     private readonly groups: GroupsService,
     private readonly balances: BalancesService,
+    private readonly fx: FxService,
   ) {}
 
   async get(userId: string, defaultCurrency: string) {
@@ -93,21 +95,32 @@ export class DashboardService {
       oweToPeople: new Set([...oweTo].map((k) => k.split(':')[1])).size,
     }));
 
-    // Cross-currency conversion needs the FX module (step 4). Until then `overall` only covers
-    // groups already in the user's default currency and says which currencies it left out.
-    const own = totalRows.find((t) => t.currency === defaultCurrency);
-    const skipped = totalRows.filter((t) => t.currency !== defaultCurrency && (t.owedToMe || t.iOwe)).map((t) => t.currency);
+    // Other currencies are converted at the latest market rate, so the overall figure is approximate
+    // (design §4.2). A currency with no rate at all is left out and listed in `excludedCurrencies`.
+    let owedToMe = 0;
+    let iOwe = 0;
+    let approximate = false;
+    const excluded: string[] = [];
+    for (const t of totalRows) {
+      if (!t.owedToMe && !t.iOwe) continue;
+      if (t.currency === defaultCurrency) {
+        owedToMe += t.owedToMe;
+        iOwe += t.iOwe;
+        continue;
+      }
+      try {
+        const { rate } = await this.fx.rateFor(t.currency, defaultCurrency);
+        owedToMe += convert(t.owedToMe, t.currency, defaultCurrency, rate);
+        iOwe += convert(t.iOwe, t.currency, defaultCurrency, rate);
+        approximate = true;
+      } catch {
+        excluded.push(t.currency);
+      }
+    }
 
     return {
       totals: totalRows,
-      overall: {
-        currency: defaultCurrency,
-        net: own?.net ?? 0,
-        owedToMe: own?.owedToMe ?? 0,
-        iOwe: own?.iOwe ?? 0,
-        approximate: false,
-        excludedCurrencies: skipped,
-      },
+      overall: { currency: defaultCurrency, net: owedToMe - iOwe, owedToMe, iOwe, approximate, excludedCurrencies: excluded },
       groups: cards,
       needsAttention: attention.sort((a, b) => b.amount - a.amount).slice(0, ATTENTION_LIMIT),
       recentActivity: [], // /activity lands in step 6
