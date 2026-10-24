@@ -1,0 +1,35 @@
+name: CI
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: settled
+          POSTGRES_PASSWORD: settled
+          POSTGRES_DB: settled
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U settled" --health-interval 5s
+          --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL: postgresql://settled:settled@localhost:5432/settled
+      CRON_SECRET: ci-cron-secret-0123456789
+      BETTER_AUTH_SECRET: ci-better-auth-secret-0123456789abcdef
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+      - run: pnpm typecheck
+      - run: pnpm --filter @settled/api exec prisma migrate deploy
+      - run: pnpm test

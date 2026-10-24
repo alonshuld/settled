@@ -934,6 +934,15 @@ Requirement: run for free for now. Every service below has a free tier with no p
 - **Weekly digest:** `digest.weekly` runs from the cron tick once the last run is older than the most recent Sunday 09:00 `Asia/Jerusalem` (DST-safe), so a missed tick is caught up. Users with `weeklySummary` on get one line per simplified transfer they are in (open groups only), by push and, for non-guests, email, in their locale. Nothing to report = nothing sent.
 - **Delete account** (`DELETE /me`, body `{ confirm: "DELETE" }`, 204): as §11.3, plus private activity, idempotency keys and email-OTP verifications are removed. A group with no other active signed-in member is deleted with its expenses and settlements. The deleted person's own `Member` rows become placeholders (`role` reset to `member`).
 
+### Implementation notes (step 7, deploy)
+- Everything is checked in; the runbook is [`DEPLOY.md`](DEPLOY.md). No account could be created from here, so signing up and pasting secrets is manual.
+- **Image:** root `Dockerfile` (node 22 slim, multi-stage, builds `packages/core` then the API). Verified locally: it applies both migrations to an empty database and `/readyz` answers `ready`. `render.yaml` is a free-plan Blueprint with `/healthz` as the health check; secrets are `sync: false` so they are typed into Render, never committed.
+- **Migrations:** Render's free plan has no pre-deploy command, so the container runs `prisma migrate deploy` before `node dist/main.js`. Use Supabase's session pooler URI (port 5432); the transaction pooler breaks migrations.
+- **Cron URL** is `POST /api/v1/internal/cron` (the global prefix applies), not `/internal/cron` as §3 and §10 abbreviate it.
+- **Proxy:** `main.ts` sets `trust proxy` to 1 so the in-memory IP rate limits and OTP limits see the client IP behind Render, not the proxy's.
+- **CI:** `.github/workflows/ci.yml` (build, typecheck, migrate against Postgres 16, tests) on `main`, `dev` and PRs. `backup.yml` is the weekly `pg_dump` to R2 from §13.2 (needs GitHub secrets). Render deploys from `main` only.
+- **R2:** private bucket, token scoped to it, CORS allows `PUT`/`GET` from the web origin (runbook has the JSON). `/readyz` still checks only the database (pg-boss was never added).
+
 ### Still open
 - Official Bit / PayBox payment links (research task, §9.8.1).
 - Custom domain: optional, but the only likely cost.

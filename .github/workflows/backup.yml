@@ -1,0 +1,26 @@
+# Weekly pg_dump to a private R2 bucket (design §13.2). Free stand-in for PITR.
+name: Weekly backup
+on:
+  schedule: [{ cron: "0 3 * * 0" }]
+  workflow_dispatch:
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install pg client 16
+        run: |
+          sudo sh -c 'echo "deb https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
+          wget -qO- https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
+          sudo apt-get update && sudo apt-get install -y postgresql-client-16
+      - name: Dump and upload
+        env:
+          BACKUP_DATABASE_URL: ${{ secrets.BACKUP_DATABASE_URL }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.BACKUP_R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.BACKUP_R2_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: auto
+          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+          BACKUP_BUCKET: ${{ secrets.BACKUP_R2_BUCKET }}
+        run: |
+          f="settled-$(date -u +%F).dump"
+          pg_dump --format=custom --no-owner "$BACKUP_DATABASE_URL" -f "$f"
+          aws s3 cp "$f" "s3://$BACKUP_BUCKET/$f" --endpoint-url "https://$R2_ACCOUNT_ID.r2.cloudflarestorage.com"
