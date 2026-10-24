@@ -20,6 +20,7 @@ export const qk = {
     list: () => ['groups', 'list'] as const,
     detail: (id: string) => ['groups', id] as const,
     expenses: (id: string, params?: object) => ['groups', id, 'expenses', params ?? {}] as const,
+    expense: (id: string, expenseId: string) => ['groups', id, 'expense', expenseId] as const,
     balances: (id: string) => ['groups', id, 'balances'] as const,
     settle: (id: string) => ['groups', id, 'settle'] as const,
     invite: (id: string) => ['groups', id, 'invite'] as const,
@@ -30,5 +31,8 @@ export const qk = {
     list: (filter?: string) => ['activity', 'list', filter ?? 'all'] as const,
     counts: () => ['activity', 'counts'] as const,
   },
-  fx: { currencies: () => ['fx', 'currencies'] as const },
+  fx: {
+    currencies: () => ['fx', 'currencies'] as const,
+    rate: (from: string, to: string, date: string) => ['fx', 'rate', from, to, date] as const,
+  },
 } as const;

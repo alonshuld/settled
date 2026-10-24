@@ -34,7 +34,9 @@ export function AppShell() {
   const active = useActive();
   const { pathname } = useLocation();
   // The group page brings its own sticky Settle / Add bar on phone (PhoneGroup board).
-  const ownBottomBar = /^\/groups\/(?!new\/?$)[^/]+\/?$/.test(pathname);
+  // The add/edit expense form is full-screen on phone: its own top bar and sticky save button.
+  const focusPage = /^\/groups\/[^/]+\/expenses\/(new|[^/]+\/edit)\/?$/.test(pathname);
+  const ownBottomBar = focusPage || /^\/groups\/(?!new\/?$)[^/]+\/?$/.test(pathname);
   const { data } = useSession();
   const name = data?.user.name || data?.user.email || '';
 
@@ -46,7 +48,7 @@ export function AppShell() {
 
   return (
     <div className="flex min-h-dvh flex-col bg-bg">
-      <header className="flex items-center gap-x-5 border-b border-line bg-surface px-4 py-2.5 md:px-8 md:py-3.5">
+      <header className={cn('flex items-center gap-x-5 border-b border-line bg-surface px-4 py-2.5 md:px-8 md:py-3.5', focusPage && 'max-md:hidden')}>
         <Brand />
         <nav aria-label={t('nav.main')} className="hidden gap-1 md:flex">
           {[...navItems, settings].map(({ to, label, on }) => (

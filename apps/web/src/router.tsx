@@ -28,6 +28,7 @@ export const routes: RouteObject[] = [
               { path: 'groups/new', ...lazy(() => import('@/features/groups/NewGroupPage')) },
               { path: 'groups/:id', ...lazy(() => import('@/features/groups/GroupPage')) },
               { path: 'groups/:id/expenses/new', ...lazy(() => import('@/features/expenses/AddExpensePage')) },
+              { path: 'groups/:id/expenses/:eid/edit', ...lazy(() => import('@/features/expenses/AddExpensePage')) },
               { path: 'groups/:id/settle', ...lazy(() => import('@/features/settle/SettlePage')) },
               { path: 'activity', ...lazy(() => import('@/features/activity/ActivityPage')) },
               { path: 'settings', ...lazy(() => import('@/features/settings/SettingsPage')) },
