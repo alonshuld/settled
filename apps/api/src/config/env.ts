@@ -18,6 +18,10 @@ const schema = z.object({
   R2_ACCESS_KEY_ID: z.string().optional(),
   R2_SECRET_ACCESS_KEY: z.string().optional(),
   R2_BUCKET: z.string().optional(),
+  // Web Push (free, no account). Unset = web push is skipped; Expo tokens still work.
+  VAPID_PUBLIC_KEY: z.string().optional(),
+  VAPID_PRIVATE_KEY: z.string().optional(),
+  VAPID_SUBJECT: z.string().default('mailto:admin@settled.local'),
   // Phone OTP is built in step 2 but stays off until an SMS provider exists.
   AUTH_PHONE_OTP_ENABLED: z
     .enum(['true', 'false'])

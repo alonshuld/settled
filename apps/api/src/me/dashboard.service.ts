@@ -1,11 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { convert, simplifyDebts } from '@settled/core';
+import { ActivityService } from '../activity/activity.service';
 import { FxService } from '../fx/fx.service';
 import { BalancesService, netOf } from '../groups/balances.service';
 import { GroupsService } from '../groups/groups.service';
 import { PrismaService } from '../prisma/prisma.service';
 
 const ATTENTION_LIMIT = 5;
+const RECENT_ACTIVITY = 5;
 
 interface Total {
   currency: string;
@@ -26,6 +28,7 @@ export class DashboardService {
     private readonly groups: GroupsService,
     private readonly balances: BalancesService,
     private readonly fx: FxService,
+    private readonly activity: ActivityService,
   ) {}
 
   async get(userId: string, defaultCurrency: string) {
@@ -123,7 +126,7 @@ export class DashboardService {
       overall: { currency: defaultCurrency, net: owedToMe - iOwe, owedToMe, iOwe, approximate, excludedCurrencies: excluded },
       groups: cards,
       needsAttention: attention.sort((a, b) => b.amount - a.amount).slice(0, ATTENTION_LIMIT),
-      recentActivity: [], // /activity lands in step 6
+      recentActivity: (await this.activity.feed(userId, { limit: RECENT_ACTIVITY })).items,
     };
   }
 }

@@ -19,6 +19,8 @@ export class ConfigController {
         guest: true,
       },
       // sms and whatsapp are links the sender's device opens; no provider is involved (design §9.9)
+      // The client needs this to subscribe to Web Push; null = web push is off
+      push: { vapidPublicKey: get('VAPID_PUBLIC_KEY') ?? null },
       reminderChannels: ['push', 'email', 'whatsapp', 'sms'],
     };
   }

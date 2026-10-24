@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import type { Gender, Locale, Theme } from '@prisma/client';
 import { AppError } from '../common/errors';
 import { PrismaService } from '../prisma/prisma.service';
+import { DEFAULT_PREFS } from './settings.service';
 
 export interface UpdateMe {
   name?: string;
@@ -40,12 +41,14 @@ export class MeService {
         email: !isGuest && Boolean(user.email) && user.emailVerified,
         phone: Boolean(user.phoneNumberVerified),
       },
-      notificationPrefs: user.notificationPrefs ?? {
-        remindersToMe: true,
-        newExpenses: true,
-        paymentsReceived: true,
-        weeklySummary: false,
-      },
+      notificationPrefs: user.notificationPrefs
+        ? {
+            remindersToMe: user.notificationPrefs.remindersToMe,
+            newExpenses: user.notificationPrefs.newExpenses,
+            paymentsReceived: user.notificationPrefs.paymentsReceived,
+            weeklySummary: user.notificationPrefs.weeklySummary,
+          }
+        : DEFAULT_PREFS,
     };
   }
 

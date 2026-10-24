@@ -12,6 +12,7 @@ import {
 import type { GroupMember } from '../common/decorators';
 import { AppError } from '../common/errors';
 import { FxService } from '../fx/fx.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { ReceiptsService } from '../uploads/receipts.service';
 
@@ -77,6 +78,7 @@ export class ExpensesService {
     private readonly prisma: PrismaService,
     private readonly fx: FxService,
     private readonly receipts: ReceiptsService,
+    private readonly notifications: NotificationsService,
   ) {}
 
   // ---- serialiser ----------------------------------------------------------
@@ -167,7 +169,7 @@ export class ExpensesService {
     });
     this.checkReceipt(me.groupId, input.receiptKey);
 
-    return this.prisma.transaction(async (tx) => {
+    const { result, activityIds } = await this.prisma.transaction(async (tx) => {
       const created = await tx.expense.create({
         data: {
           groupId: me.groupId,
@@ -189,7 +191,7 @@ export class ExpensesService {
         include: { shares: true },
       });
       const names = nameMap(members);
-      await tx.activity.create({
+      const activity = await tx.activity.create({
         data: {
           groupId: me.groupId,
           actorMemberId: me.id,
@@ -206,13 +208,15 @@ export class ExpensesService {
             paidByMemberId: created.paidByMemberId,
             paidBy: names.get(created.paidByMemberId) ?? '',
             actor: names.get(me.id) ?? '',
-            // Everyone whose balance this moves: step 6's fan-out always notifies them (design §9.5.1)
+            // Everyone whose balance this moves: the fan-out always notifies them (design §9.5.1)
             affectedMemberIds: affected(created.paidByMemberId, created.shares),
           },
         },
       });
-      return this.view(created, null);
+      return { result: this.view(created, null), activityIds: [activity.id] };
     });
+    await this.notifications.dispatch(activityIds);
+    return result;
   }
 
   async update(me: GroupMember, expenseId: string, input: UpdateExpense) {
@@ -252,7 +256,7 @@ export class ExpensesService {
     const receiptKey = input.receiptKey === undefined ? before.receiptKey : input.receiptKey;
     if (input.receiptKey !== undefined) this.checkReceipt(me.groupId, receiptKey);
 
-    return this.prisma.transaction(async (tx) => {
+    const { result, activityIds } = await this.prisma.transaction(async (tx) => {
       const claimed = await tx.expense.updateMany({
         where: { id: before.id, version: input.version, deletedAt: null },
         data: {
@@ -277,9 +281,10 @@ export class ExpensesService {
       const after = await tx.expense.findUniqueOrThrow({ where: { id: before.id }, include: { shares: true } });
 
       const diff = expenseDiff(snapshot(before), snapshot(after));
+      const ids: string[] = [];
       if (Object.keys(diff.fields).length > 0) {
         const names = nameMap(members);
-        await tx.activity.create({
+        const activity = await tx.activity.create({
           data: {
             groupId: me.groupId,
             actorMemberId: me.id,
@@ -288,23 +293,26 @@ export class ExpensesService {
             payload: this.changePayload(after, group.currency, names, me.id, diff, before),
           },
         });
+        ids.push(activity.id);
       }
-      return this.view(after, null);
+      return { result: this.view(after, null), activityIds: ids };
     });
+    await this.notifications.dispatch(activityIds);
+    return result;
   }
 
   async remove(me: GroupMember, expenseId: string) {
     const group = await this.openGroup(me.groupId);
     const before = await this.load(me.groupId, expenseId);
     const members = await this.activeMembers(me.groupId, [before.paidByMemberId, ...before.shares.map((s) => s.memberId)]);
-    await this.prisma.transaction(async (tx) => {
+    const activityId = await this.prisma.transaction(async (tx) => {
       const claimed = await tx.expense.updateMany({
         where: { id: before.id, deletedAt: null },
         data: { deletedAt: new Date(), version: { increment: 1 } },
       });
       if (claimed.count === 0) throw new AppError('NOT_FOUND', 404);
       const diff = expenseDiff(snapshot(before), null);
-      await tx.activity.create({
+      const activity = await tx.activity.create({
         data: {
           groupId: me.groupId,
           actorMemberId: me.id,
@@ -313,7 +321,9 @@ export class ExpensesService {
           payload: this.changePayload(before, group.currency, nameMap(members), me.id, diff),
         },
       });
+      return activity.id;
     });
+    await this.notifications.dispatch([activityId]);
   }
 
   // ---- internals -----------------------------------------------------------

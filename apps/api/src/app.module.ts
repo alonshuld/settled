@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_FILTER, APP_GUARD } from '@nestjs/core';
 import { LoggerModule } from 'nestjs-pino';
+import { ActivityModule } from './activity/activity.module';
 import { AuthModule } from './auth/auth.module';
 import { ConfigController } from './config/config.controller';
 import { SessionGuard } from './common/guards/session.guard';
@@ -14,6 +15,7 @@ import { MeModule } from './me/me.module';
 import { ApiExceptionFilter } from './common/filters/api-exception.filter';
 import { validateEnv } from './config/env';
 import { HealthController } from './health/health.controller';
+import { NotificationsModule } from './notifications/notifications.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { RemindersModule } from './reminders/reminders.module';
 import { SettlementsModule } from './settlements/settlements.module';
@@ -31,6 +33,8 @@ import { UploadsModule } from './uploads/uploads.module';
     }),
     PrismaModule,
     EmailModule,
+    NotificationsModule,
+    ActivityModule,
     AuthModule,
     MeModule,
     GroupsModule,

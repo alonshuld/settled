@@ -5,6 +5,7 @@ import type { GroupMember } from '../common/decorators';
 import { AppError } from '../common/errors';
 import { FxService } from '../fx/fx.service';
 import { BalancesService } from '../groups/balances.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import { PrismaService } from '../prisma/prisma.service';
 
 export interface CreateSettlement {
@@ -38,6 +39,7 @@ export class SettlementsService {
     private readonly prisma: PrismaService,
     private readonly fx: FxService,
     private readonly balances: BalancesService,
+    private readonly notifications: NotificationsService,
   ) {}
 
   view(s: Settlement) {
@@ -158,7 +160,7 @@ export class SettlementsService {
 
     const status = asCreditor ? 'confirmed' : 'pending';
     const names = new Map(members.map((m) => [m.id, m.displayName]));
-    const created = await this.prisma.transaction(async (tx) => {
+    const { created, activityId } = await this.prisma.transaction(async (tx) => {
       const s = await tx.settlement.create({
         data: {
           groupId: me.groupId,
@@ -175,9 +177,10 @@ export class SettlementsService {
           confirmedAt: status === 'confirmed' ? new Date() : null,
         },
       });
-      await this.activity(tx, s, group.currency, names, me.id, status === 'confirmed' ? 'payment.confirmed' : 'payment.claimed');
-      return s;
+      const a = await this.activity(tx, s, group.currency, names, me.id, status === 'confirmed' ? 'payment.confirmed' : 'payment.claimed');
+      return { created: s, activityId: a.id };
     });
+    await this.notifications.dispatch([activityId]);
     if (status === 'confirmed') await this.stopSettledReminders(created);
     return this.view(created);
   }
@@ -194,13 +197,14 @@ export class SettlementsService {
       throw new AppError('VALIDATION_FAILED', 400, 'More than is owed now', { fields: { amount: ['More than is owed'] }, outstanding });
     }
     const names = await this.names(s);
-    const confirmed = await this.prisma.transaction(async (tx) => {
+    const { confirmed, activityId } = await this.prisma.transaction(async (tx) => {
       const claimed = await tx.settlement.updateMany({ where: { id: s.id, status: 'pending' }, data: { status: 'confirmed', confirmedAt: new Date(), baseAmount } });
       if (claimed.count === 0) throw new AppError('SETTLEMENT_NOT_PENDING', 409);
       const after = await tx.settlement.findUniqueOrThrow({ where: { id: s.id } });
-      await this.activity(tx, after, group.currency, names, me.id, 'payment.confirmed');
-      return after;
+      const a = await this.activity(tx, after, group.currency, names, me.id, 'payment.confirmed');
+      return { confirmed: after, activityId: a.id };
     });
+    await this.notifications.dispatch([activityId]);
     await this.stopSettledReminders(confirmed);
     return this.view(confirmed);
   }
@@ -211,13 +215,14 @@ export class SettlementsService {
     if (s.status !== 'pending') throw new AppError('SETTLEMENT_NOT_PENDING', 409);
     const group = await this.prisma.group.findUniqueOrThrow({ where: { id: me.groupId }, select: { currency: true } });
     const names = await this.names(s);
-    const rejected = await this.prisma.transaction(async (tx) => {
+    const { rejected, activityId } = await this.prisma.transaction(async (tx) => {
       const claimed = await tx.settlement.updateMany({ where: { id: s.id, status: 'pending' }, data: { status: 'rejected' } });
       if (claimed.count === 0) throw new AppError('SETTLEMENT_NOT_PENDING', 409);
       const after = await tx.settlement.findUniqueOrThrow({ where: { id: s.id } });
-      await this.activity(tx, after, group.currency, names, me.id, 'payment.rejected');
-      return after;
+      const a = await this.activity(tx, after, group.currency, names, me.id, 'payment.rejected');
+      return { rejected: after, activityId: a.id };
     });
+    await this.notifications.dispatch([activityId]);
     return this.view(rejected);
   }
 

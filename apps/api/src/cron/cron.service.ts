@@ -1,5 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
+import { DigestService } from '../digest/digest.service';
+import { digestWeekStart } from '../digest/week';
 import { FxService } from '../fx/fx.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { RemindersService } from '../reminders/reminders.service';
@@ -23,13 +25,15 @@ export class CronService {
     private readonly fx: FxService,
     private readonly reminders: RemindersService,
     private readonly receipts: ReceiptsService,
+    private readonly digest: DigestService,
   ) {}
 
   /** Runs every task that is due. One failing task never blocks the others. */
   async tick(now = new Date()): Promise<Record<string, TaskResult | { error: string }>> {
-    const tasks: { name: string; every: number | null; run: () => Promise<TaskResult> }[] = [
+    const tasks: { name: string; every: number | null; dueBefore?: Date; run: () => Promise<TaskResult> }[] = [
       { name: 'reminders.autoRepeat', every: null, run: () => this.reminders.runDue(now) },
       { name: 'fx.daily', every: null, run: async () => (await this.fx.ensureToday(), {}) },
+      { name: 'digest.weekly', every: null, dueBefore: digestWeekStart(now), run: () => this.digest.run() },
       { name: 'cleanup.idempotency', every: HOUR, run: () => this.cleanIdempotency(now) },
       { name: 'cleanup.uploads', every: DAY, run: () => this.cleanUploads() },
       { name: 'cleanup.guests', every: DAY, run: () => this.cleanGuests(now) },
@@ -37,7 +41,8 @@ export class CronService {
     const out: Record<string, TaskResult | { error: string }> = {};
     for (const t of tasks) {
       try {
-        if (t.every !== null && !(await this.claim(t.name, t.every, now))) continue;
+        const dueBefore = t.every !== null ? new Date(now.getTime() - t.every) : t.dueBefore;
+        if (dueBefore && !(await this.claim(t.name, dueBefore, now))) continue;
         out[t.name] = await t.run();
       } catch (e) {
         this.log.error(`cron task ${t.name} failed: ${(e as Error).message}`);
@@ -48,11 +53,10 @@ export class CronService {
   }
 
   /**
-   * Marks a periodic task as started if it is due. The update is conditional, so two overlapping ticks
-   * cannot both claim it; a task that then fails is retried after its full interval (fine for cleanups).
+   * Marks a periodic task as started if its last run is older than `dueBefore`. The update is conditional, so two
+   * overlapping ticks cannot both claim it; a task that then fails is retried after its full interval (fine for cleanups).
    */
-  private async claim(task: string, everyMs: number, now: Date): Promise<boolean> {
-    const dueBefore = new Date(now.getTime() - everyMs);
+  private async claim(task: string, dueBefore: Date, now: Date): Promise<boolean> {
     const updated = await this.prisma.cronRun.updateMany({ where: { task, lastRunAt: { lt: dueBefore } }, data: { lastRunAt: now } });
     if (updated.count > 0) return true;
     try {

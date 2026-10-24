@@ -5,6 +5,7 @@ import type { GroupMember } from '../common/decorators';
 import { AppError } from '../common/errors';
 import { EmailService } from '../email/email.service';
 import { BalancesService } from '../groups/balances.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import { PrismaService } from '../prisma/prisma.service';
 
 export interface SendReminder {
@@ -44,6 +45,8 @@ interface Prepared {
   /** WhatsApp / SMS deep link for the client (or for the creditor's nudge). */
   link: string | null;
   email: { to: string; subject: string; text: string } | null;
+  /** Filled by `commit`, so the push fan-out can run after the transaction. */
+  activityIds?: string[];
 }
 
 const addDays = (d: Date, days: number) => new Date(d.getTime() + days * DAY_MS);
@@ -57,6 +60,7 @@ export class RemindersService {
     private readonly prisma: PrismaService,
     private readonly balances: BalancesService,
     private readonly email: EmailService,
+    private readonly notifications: NotificationsService,
   ) {}
 
   view(r: Reminder, link?: string | null) {
@@ -351,7 +355,7 @@ export class RemindersService {
           type: 'reminder',
           event: 'reminder.received',
           audienceUserId: debtor.userId,
-          payload: { ...ref, creditorName: creditor.displayName, groupName: group.name, tone: input.tone, message },
+          payload: { ...ref, creditorName: creditor.displayName, groupName: group.name, tone: input.tone, channel: input.channel, message },
         });
       }
     }
@@ -388,12 +392,14 @@ export class RemindersService {
 
   private async commit(tx: Prisma.TransactionClient, p: Prepared) {
     const created = await tx.reminder.create({ data: p.reminder });
-    if (p.activities.length > 0) await tx.activity.createMany({ data: p.activities });
+    p.activityIds = [];
+    for (const data of p.activities) p.activityIds.push((await tx.activity.create({ data, select: { id: true } })).id);
     return created;
   }
 
   /** Email goes out after the commit (design §10): a crash loses a notification, never data. */
   private async afterCommit(p: Prepared, reminder: Reminder): Promise<Reminder> {
+    await this.notifications.dispatch(p.activityIds ?? []);
     if (!p.email) return reminder;
     let lastError = '';
     for (let attempt = 1; attempt <= EMAIL_ATTEMPTS; attempt++) {
