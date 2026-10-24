@@ -74,6 +74,12 @@
   --color-av-4: #e2b6ff;
   --color-av-5: #ffe08a;
   --color-av-6: #9ee6cf;
+  --color-tint-trip: #9cc8ff;
+  --color-tint-home: #ffe08a;
+  --color-tint-event: #9ee6cf;
+  --color-tint-meal: #ffb59a;
+  --color-tint-gift: #e2b6ff;
+  --color-tint-other: #d5d9e0;
   --animate-stamp: stamp-thump 1.2s cubic-bezier(0.2, 0.9, 0.3, 1) both;
   --animate-shimmer: shimmer 1.5s ease-in-out infinite;
   --animate-splash-stamp: splash-thump 2.6s cubic-bezier(0.2, 0.9, 0.3, 1) infinite;

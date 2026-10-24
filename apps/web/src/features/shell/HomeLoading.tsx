@@ -5,34 +5,25 @@ import { LogoMark } from '@/components/ui/Logo';
 
 const card = 'rounded-card border border-line bg-surface';
 
-/** Skeleton of the Home screen (HomeLoading / PhoneLoading boards) shown while the session resolves. */
-export function HomeLoading() {
+/** Page content only (no chrome); the app shell supplies the header and tab bar while groups load. */
+export function HomeLoadingBody({ withPrefs }: { withPrefs?: boolean }) {
   const { t } = useTranslation();
   return (
-    <div aria-busy="true" className="min-h-dvh bg-bg">
+    <div aria-busy="true" className="contents">
       <span role="status" className="sr-only">
         {t('splash.loadingGroups')}
       </span>
-
-      <header className="hidden flex-wrap items-center gap-x-5 gap-y-3 border-b border-line bg-surface px-8 py-3.5 md:flex">
-        <span className="flex items-center gap-2.5">
-          <LogoMark />
-          <span className="text-xl font-bold">{t('brand')}</span>
-        </span>
-        <div className="flex-1" />
-        <PrefControls />
-        <Skeleton className="size-11 rounded-full" />
-      </header>
-
       <div className="flex flex-col gap-4.5 px-5 pt-6 md:mx-auto md:max-w-7xl md:gap-8 md:px-8 md:pt-10">
         <div className="flex items-center gap-2 md:items-end md:justify-between md:gap-5">
           <div className="flex flex-1 flex-col gap-2 md:flex-none md:gap-3">
             <Skeleton className="h-3 w-28 md:h-3.5 md:w-40" />
             <Skeleton className="h-6.5 w-38 md:h-9.5 md:w-60 md:rounded-[10px]" />
           </div>
-          <div className="flex gap-2 md:hidden">
-            <PrefControls />
-          </div>
+          {withPrefs && (
+            <div className="flex gap-2 md:hidden">
+              <PrefControls />
+            </div>
+          )}
           <div className="hidden gap-2.5 md:flex">
             <Skeleton className="h-11 w-37.5 rounded-control" />
             <Skeleton className="h-11 w-35 rounded-control" />
@@ -113,6 +104,26 @@ export function HomeLoading() {
           </aside>
         </div>
       </div>
+    </div>
+  );
+}
+
+/** Skeleton of the Home screen (HomeLoading / PhoneLoading boards) shown while the session resolves. */
+export function HomeLoading() {
+  const { t } = useTranslation();
+  return (
+    <div aria-busy="true" className="min-h-dvh bg-bg">
+      <header className="hidden flex-wrap items-center gap-x-5 gap-y-3 border-b border-line bg-surface px-8 py-3.5 md:flex">
+        <span className="flex items-center gap-2.5">
+          <LogoMark />
+          <span className="text-xl font-bold">{t('brand')}</span>
+        </span>
+        <div className="flex-1" />
+        <PrefControls />
+        <Skeleton className="size-11 rounded-full" />
+      </header>
+
+      <HomeLoadingBody withPrefs />
 
       <div className="fixed inset-x-0 bottom-0 flex items-center justify-around border-t border-line bg-surface px-6 pt-3 pb-7 md:hidden">
         <Skeleton className="size-6.5 rounded-lg" />
