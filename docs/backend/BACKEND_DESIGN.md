@@ -897,6 +897,15 @@ Requirement: run for free for now. Every service below has a free tier with no p
 - **Guest name:** `sign-in/anonymous` takes no body, so the client signs in and then calls `PATCH /me { name }`. Until then the name is "Anonymous".
 - **Email:** Resend when `RESEND_API_KEY` is set, otherwise Mailpit's HTTP API (local).
 
+### Implementation notes (step 3, groups)
+- **Rotated invites** return `404 INVITE_NOT_FOUND`, not `410`: the invite is one row per group, so the old code is simply gone. `410 INVITE_EXPIRED` is still used for `expiresAt` in the past and `revokedAt` set.
+- **New error codes:** `GROUP_HAS_EXPENSES` (delete group), `CURRENCY_LOCKED` (change base currency after first expense), `MEMBER_HAS_ACTIVITY` (remove placeholder with money rows), all `409`.
+- **Owner cannot leave** (`403 FORBIDDEN`): there is no ownership transfer in the design yet.
+- **Rejoin:** joining a group you left reactivates your old member row (history intact).
+- **Dashboard:** `overall` only covers groups already in the user's default currency and lists `excludedCurrencies`; real conversion arrives with the FX module (step 4). `recentActivity` is `[]` until `/activity` (step 6). `needsAttention` items carry `currency` and come from simplified transfers; `note` and `since` are not filled yet.
+- **Preview rate limit** (30/min per IP) is in-memory, like the OTP limits.
+- Group, member and join changes write `Activity` rows (`group.*`, `member.*`) in the same transaction.
+
 ### Still open
 - Official Bit / PayBox payment links (research task, §9.8.1).
 - Custom domain: optional, but the only likely cost.

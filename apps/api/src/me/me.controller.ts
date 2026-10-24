@@ -3,6 +3,7 @@ import { isCurrency } from '@settled/core';
 import { z } from 'zod';
 import { CurrentUser, type SessionUser } from '../common/decorators';
 import { ZodPipe } from '../common/zod.pipe';
+import { DashboardService } from './dashboard.service';
 import { MeService } from './me.service';
 
 const updateMe = z
@@ -20,11 +21,20 @@ const updateMe = z
 
 @Controller('me')
 export class MeController {
-  constructor(private readonly me: MeService) {}
+  constructor(
+    private readonly me: MeService,
+    private readonly dashboard: DashboardService,
+  ) {}
 
   @Get()
   get(@CurrentUser() user: SessionUser) {
     return this.me.get(user.id);
+  }
+
+  @Get('dashboard')
+  async getDashboard(@CurrentUser() user: SessionUser) {
+    const { defaultCurrency } = await this.me.get(user.id);
+    return this.dashboard.get(user.id, defaultCurrency);
   }
 
   @Patch()

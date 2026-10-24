@@ -15,3 +15,15 @@ export interface SessionUser {
 export const CurrentUser = createParamDecorator((_: unknown, ctx: ExecutionContext): SessionUser => {
   return (ctx.switchToHttp().getRequest<Request & { user: SessionUser }>()).user;
 });
+
+export interface GroupMember {
+  id: string;
+  groupId: string;
+  userId: string;
+  role: 'owner' | 'member';
+}
+
+/** The caller's active member row, attached by GroupMemberGuard. */
+export const CurrentMember = createParamDecorator((_: unknown, ctx: ExecutionContext): GroupMember => {
+  return (ctx.switchToHttp().getRequest<Request & { member: GroupMember }>()).member;
+});
