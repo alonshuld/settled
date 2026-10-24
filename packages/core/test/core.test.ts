@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vite-plus/test';
 import {
+  appendPaymentDetails,
+  buildPayOptions,
   computeBalances,
   computeShares,
   convert,
@@ -10,6 +12,10 @@ import {
   generateInviteCode,
   isCurrency,
   parseInviteCode,
+  renderReminder,
+  smsLink,
+  toMajorString,
+  whatsappLink,
   simplifyDebts,
   SplitError,
 } from '../src/index.js';
@@ -237,5 +243,56 @@ describe('expenseDiff', () => {
       { memberId: 'noa', before: 24000, after: 0 },
       { memberId: 'itay', before: -24000, after: 0 },
     ]);
+  });
+});
+
+describe('pay options', () => {
+  it('builds PayPal with amount and copy-only for Bit', () => {
+    const o = buildPayOptions({ paypalMe: '@alon', bitPhone: '050-1234567', bankDetails: 'Leumi 10 123' }, 34000, 'ILS');
+    expect(o.find((x) => x.method === 'paypal')?.url).toBe('https://paypal.me/alon/340.00ILS');
+    expect(o.find((x) => x.method === 'bit')).toMatchObject({ copyText: '050-1234567\n340.00 ILS', amountPrefilled: false });
+    expect(o.find((x) => x.method === 'bit')?.url).toBeUndefined();
+    expect(buildPayOptions(null, 100, 'ILS')).toEqual([]);
+  });
+
+  it('formats major units for 0 and 3 decimal currencies', () => {
+    expect(toMajorString(1000, 'JPY')).toBe('1000');
+    expect(toMajorString(1234, 'KWD')).toBe('1.234');
+    expect(toMajorString(5, 'ILS')).toBe('0.05');
+  });
+});
+
+describe('reminders', () => {
+  const base = { locale: 'en', debtorName: 'Noa', creditorName: 'Alon', amount: 90000, currency: 'ILS', groupName: 'Crete trip' } as const;
+
+  it('renders each tone in both locales', () => {
+    for (const tone of ['friendly', 'neutral', 'firm'] as const) {
+      for (const locale of ['en', 'he'] as const) {
+        const text = renderReminder({ ...base, tone, locale });
+        expect(text).toContain('Noa');
+        expect(text).toContain('Crete trip');
+        expect(text).toMatch(/900/);
+      }
+    }
+  });
+
+  it('agrees Hebrew grammar with gender', () => {
+    expect(renderReminder({ ...base, tone: 'friendly', locale: 'he', gender: 'female' })).toContain('את חייבת');
+    expect(renderReminder({ ...base, tone: 'friendly', locale: 'he', gender: 'male' })).toContain('אתה חייב');
+    expect(renderReminder({ ...base, tone: 'friendly', locale: 'he' })).toContain('את/ה חייב/ת');
+  });
+
+  it('appends payment details once', () => {
+    const d = { bitPhone: '0501234567' };
+    const once = appendPaymentDetails('Please pay', d, 'en');
+    expect(once).toContain('Bit: 0501234567');
+    expect(appendPaymentDetails(once, d, 'en')).toBe(once);
+    expect(appendPaymentDetails('Please pay', null, 'en')).toBe('Please pay');
+  });
+
+  it('builds wa.me and sms links', () => {
+    expect(whatsappLink('+972501234567', 'hi there')).toBe('https://wa.me/972501234567?text=hi%20there');
+    expect(smsLink('+972501234567', 'hi')).toBe('sms:+972501234567?body=hi');
+    expect(smsLink('+972501234567', 'hi', 'ios')).toBe('sms:+972501234567&body=hi');
   });
 });

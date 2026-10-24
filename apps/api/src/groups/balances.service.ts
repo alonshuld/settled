@@ -74,6 +74,11 @@ export class BalancesService {
     };
   }
 
+  /** Simplified transfers right now: who still owes whom (never stored). */
+  async transfers(groupId: string) {
+    return simplifyDebts((await this.forGroup(groupId)).balances);
+  }
+
   async forGroup(groupId: string): Promise<GroupBalances> {
     return (await this.forGroups([groupId])).get(groupId)!;
   }

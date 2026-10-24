@@ -4,3 +4,6 @@ export * from './balances.js';
 export * from './simplify.js';
 export * from './invite.js';
 export * from './diff.js';
+export * from './money.js';
+export * from './payLinks.js';
+export * from './reminders.js';

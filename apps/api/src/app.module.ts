@@ -5,6 +5,7 @@ import { LoggerModule } from 'nestjs-pino';
 import { AuthModule } from './auth/auth.module';
 import { ConfigController } from './config/config.controller';
 import { SessionGuard } from './common/guards/session.guard';
+import { CronModule } from './cron/cron.module';
 import { EmailModule } from './email/email.module';
 import { ExpensesModule } from './expenses/expenses.module';
 import { FxModule } from './fx/fx.module';
@@ -14,6 +15,8 @@ import { ApiExceptionFilter } from './common/filters/api-exception.filter';
 import { validateEnv } from './config/env';
 import { HealthController } from './health/health.controller';
 import { PrismaModule } from './prisma/prisma.module';
+import { RemindersModule } from './reminders/reminders.module';
+import { SettlementsModule } from './settlements/settlements.module';
 import { UploadsModule } from './uploads/uploads.module';
 
 @Module({
@@ -34,6 +37,9 @@ import { UploadsModule } from './uploads/uploads.module';
     FxModule,
     ExpensesModule,
     UploadsModule,
+    SettlementsModule,
+    RemindersModule,
+    CronModule,
   ],
   controllers: [HealthController, ConfigController],
   providers: [

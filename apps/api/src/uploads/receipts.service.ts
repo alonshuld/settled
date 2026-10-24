@@ -1,4 +1,4 @@
-import { GetObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import { DeleteObjectsCommand, GetObjectCommand, ListObjectsV2Command, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -72,5 +72,32 @@ export class ReceiptsService {
     const Bucket = this.bucket();
     if (!key || !client || !Bucket) return null;
     return getSignedUrl(client, new GetObjectCommand({ Bucket, Key: key }), { expiresIn: VIEW_TTL_S });
+  }
+
+  /**
+   * Deletes receipt objects older than `olderThanMs` that no expense points to (design §9.6).
+   * `referenced` answers which of the given keys are still in use.
+   */
+  async deleteOrphans(referenced: (keys: string[]) => Promise<Set<string>>, olderThanMs: number): Promise<number> {
+    const client = this.s3();
+    const Bucket = this.bucket();
+    if (!client || !Bucket) return 0;
+    const cutoff = Date.now() - olderThanMs;
+    let deleted = 0;
+    let ContinuationToken: string | undefined;
+    do {
+      const page = await client.send(new ListObjectsV2Command({ Bucket, Prefix: 'receipts/', ContinuationToken }));
+      const old = (page.Contents ?? []).filter((o) => o.Key && o.LastModified && o.LastModified.getTime() < cutoff).map((o) => o.Key!);
+      if (old.length > 0) {
+        const used = await referenced(old);
+        const orphans = old.filter((k) => !used.has(k));
+        if (orphans.length > 0) {
+          await client.send(new DeleteObjectsCommand({ Bucket, Delete: { Objects: orphans.map((Key) => ({ Key })), Quiet: true } }));
+          deleted += orphans.length;
+        }
+      }
+      ContinuationToken = page.IsTruncated ? page.NextContinuationToken : undefined;
+    } while (ContinuationToken);
+    return deleted;
   }
 }
