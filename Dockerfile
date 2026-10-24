@@ -5,6 +5,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-cert
 WORKDIR /app
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.base.json ./
 COPY packages/core/package.json packages/core/
+COPY packages/api-client/package.json packages/api-client/
 COPY apps/api/package.json apps/api/
 RUN pnpm install --frozen-lockfile --filter @settled/api...
 COPY packages/core packages/core

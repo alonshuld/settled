@@ -1,0 +1,173 @@
+import 'reflect-metadata';
+import { RequestMethod } from '@nestjs/common';
+import { z } from 'zod';
+import { IS_PUBLIC } from '../common/decorators';
+import { ZodPipe } from '../common/zod.pipe';
+
+/**
+ * Builds the OpenAPI 3.0 spec for `/api/v1` straight from the Nest controllers (design §1, §8):
+ * routes and verbs come from the decorators, request bodies and queries from the `ZodPipe` schemas
+ * already used for validation, so the spec cannot drift from what the API accepts. Responses are
+ * described by status only (services return plain objects, there are no response DTOs).
+ *
+ * Reads decorator metadata only: it never instantiates a module, so it needs no database or env.
+ */
+
+type Ctor = new (...args: never[]) => object;
+type ModuleRef = Ctor | { module: Ctor; imports?: unknown[]; controllers?: Ctor[] };
+
+const PATH = 'path';
+const METHOD = 'method';
+const HTTP_CODE = '__httpCode__';
+const ROUTE_ARGS = '__routeArguments__';
+// @nestjs/common RouteParamtypes
+const BODY = 3;
+const QUERY = 4;
+
+const METHODS: Partial<Record<number, 'get' | 'post' | 'put' | 'patch' | 'delete'>> = {
+  [RequestMethod.GET]: 'get',
+  [RequestMethod.POST]: 'post',
+  [RequestMethod.PUT]: 'put',
+  [RequestMethod.PATCH]: 'patch',
+  [RequestMethod.DELETE]: 'delete',
+};
+
+/** Routes that are not part of the public contract. */
+const EXCLUDED = new Set(['POST /internal/cron', 'GET /healthz', 'GET /readyz']);
+
+type Json = Record<string, unknown>;
+
+export function collectControllers(root: ModuleRef): Ctor[] {
+  const seen = new Set<unknown>();
+  const found = new Set<Ctor>();
+  const visit = (ref: unknown) => {
+    if (!ref || seen.has(ref)) return;
+    seen.add(ref);
+    const dyn = ref as { module?: Ctor; imports?: unknown[]; controllers?: Ctor[] };
+    const mod = (typeof ref === 'function' ? ref : dyn.module) as Ctor;
+    // Async dynamic modules (logger etc.) are promises and never carry controllers
+    if (typeof mod !== 'function') return;
+    const imports = [...(Reflect.getMetadata('imports', mod) ?? []), ...(dyn.imports ?? [])];
+    const controllers: Ctor[] = [...(Reflect.getMetadata('controllers', mod) ?? []), ...(dyn.controllers ?? [])];
+    controllers.forEach((c) => found.add(c));
+    imports.forEach(visit);
+  };
+  visit(root);
+  return [...found];
+}
+
+function schemaOf(proto: object, key: string, kind: number): z.ZodType | undefined {
+  const args = Reflect.getMetadata(ROUTE_ARGS, proto.constructor, key) as Record<string, { pipes: unknown[] }> | undefined;
+  for (const [id, arg] of Object.entries(args ?? {})) {
+    if (Number(id.split(':')[0]) !== kind) continue;
+    const pipe = arg.pipes.find((p): p is ZodPipe<z.ZodType> => p instanceof ZodPipe);
+    if (pipe) return (pipe as unknown as { schema: z.ZodType }).schema;
+  }
+  return undefined;
+}
+
+function jsonSchema(schema: z.ZodType, io: 'input' | 'output' = 'input'): Json {
+  const { $schema: _ignored, ...rest } = z.toJSONSchema(schema, { io, unrepresentable: 'any', target: 'draft-7' }) as Json;
+  return rest;
+}
+
+const lowerFirst = (s: string) => s.charAt(0).toLowerCase() + s.slice(1);
+const upperFirst = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+
+const ERROR_RESPONSE = {
+  description: 'Error (design §4.4). `error.code` is stable and what clients switch on.',
+  content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiError' } } },
+};
+
+export function buildOpenApi(root: ModuleRef, version = '1.0.0'): Json {
+  const paths: Record<string, Record<string, Json>> = {};
+  const operationIds = new Set<string>();
+
+  for (const controller of collectControllers(root)) {
+    const prefix = (Reflect.getMetadata(PATH, controller) as string | undefined) ?? '';
+    const proto = controller.prototype as Record<string, unknown>;
+    for (const key of Object.getOwnPropertyNames(proto)) {
+      const handler = proto[key];
+      if (key === 'constructor' || typeof handler !== 'function') continue;
+      const verb = METHODS[Reflect.getMetadata(METHOD, handler) as number];
+      if (!verb) continue;
+
+      const sub = (Reflect.getMetadata(PATH, handler) as string | undefined) ?? '';
+      const route = '/' + [prefix, sub].map((p) => p.replace(/^\/|\/$/g, '')).filter(Boolean).join('/');
+      if (EXCLUDED.has(`${verb.toUpperCase()} ${route}`)) continue;
+
+      const openApiPath = route.replace(/:(\w+)/g, '{$1}');
+      const isPublic = Boolean(Reflect.getMetadata(IS_PUBLIC, handler) ?? Reflect.getMetadata(IS_PUBLIC, controller));
+      const status = (Reflect.getMetadata(HTTP_CODE, handler) as number | undefined) ?? (verb === 'post' ? 201 : 200);
+
+      let operationId = lowerFirst(controller.name.replace(/Controller$/, '')) + upperFirst(key);
+      if (operationIds.has(operationId)) throw new Error(`Duplicate operationId ${operationId}`);
+      operationIds.add(operationId);
+
+      const parameters: Json[] = [...route.matchAll(/:(\w+)/g)].map((m) => ({
+        name: m[1],
+        in: 'path',
+        required: true,
+        schema: { type: 'string' },
+      }));
+
+      const query = schemaOf(proto, key, QUERY);
+      if (query) {
+        const js = jsonSchema(query) as { properties?: Record<string, Json>; required?: string[] };
+        for (const [name, schema] of Object.entries(js.properties ?? {})) {
+          parameters.push({ name, in: 'query', required: js.required?.includes(name) ?? false, schema });
+        }
+      }
+
+      const body = schemaOf(proto, key, BODY);
+      const op: Json = {
+        operationId,
+        tags: [prefix.split('/')[0] || 'root'],
+        ...(parameters.length > 0 ? { parameters } : {}),
+        ...(body ? { requestBody: { required: true, content: { 'application/json': { schema: jsonSchema(body) } } } } : {}),
+        security: isPublic ? [] : [{ bearerAuth: [] }, { cookieAuth: [] }],
+        responses: {
+          [status]: status === 204 ? { description: 'No content' } : { description: 'Success', content: { 'application/json': { schema: {} } } },
+          default: ERROR_RESPONSE,
+        },
+      };
+      (paths[openApiPath] ??= {})[verb] = op;
+    }
+  }
+
+  const sorted = Object.fromEntries(Object.entries(paths).sort(([a], [b]) => a.localeCompare(b)));
+  return {
+    openapi: '3.0.3',
+    info: {
+      title: 'Settled (Shulam) API',
+      version,
+      description: 'Generated from the NestJS controllers. Do not edit by hand; run `pnpm --filter @settled/api openapi`.',
+    },
+    servers: [{ url: '/api/v1' }],
+    paths: sorted,
+    components: {
+      securitySchemes: {
+        bearerAuth: { type: 'http', scheme: 'bearer', description: 'Session token from the `set-auth-token` header of a Better Auth sign-in (mobile).' },
+        cookieAuth: { type: 'apiKey', in: 'cookie', name: 'better-auth.session_token', description: 'Web: HttpOnly session cookie.' },
+      },
+      schemas: {
+        ApiError: {
+          type: 'object',
+          required: ['error'],
+          properties: {
+            error: {
+              type: 'object',
+              required: ['code', 'message', 'requestId'],
+              properties: {
+                code: { type: 'string', description: 'Stable error code, see design §4.4' },
+                message: { type: 'string' },
+                details: { type: 'object', additionalProperties: true },
+                requestId: { type: 'string' },
+              },
+            },
+          },
+        },
+      },
+    },
+  };
+}

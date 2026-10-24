@@ -878,7 +878,7 @@ Requirement: run for free for now. Every service below has a free tier with no p
 5. **Settle up:** settlements in any currency (mark received, I already paid, confirm/reject/undo), pay options, settle view, reminders (push, email, WhatsApp link, SMS link), `/internal/cron` + auto-repeat.
 6. **Activity & settings:** feed, counts, mark-read, notification prefs + fan-out, payment details, stats, weekly digest, delete account.
 7. **Deploy (free tier):** Render + Supabase + Vercel + cron-job.org + R2 per §13.1.
-8. **Mobile readiness:** bearer auth, Expo push channel, API client package published for the app.
+8. **Mobile readiness:** bearer auth, Expo push channel, API client package for the app. *(Done: the package is workspace/tarball-ready and not published to npm, see the step 8 notes.)*
 
 ## 15. Decisions log
 
@@ -942,6 +942,13 @@ Requirement: run for free for now. Every service below has a free tier with no p
 - **Proxy:** `main.ts` sets `trust proxy` to 1 so the in-memory IP rate limits and OTP limits see the client IP behind Render, not the proxy's.
 - **CI:** `.github/workflows/ci.yml` (build, typecheck, migrate against Postgres 16, tests) on `main`, `dev` and PRs. `backup.yml` is the weekly `pg_dump` to R2 from §13.2 (needs GitHub secrets). Render deploys from `main` only.
 - **R2:** private bucket, token scoped to it, CORS allows `PUT`/`GET` from the web origin (runbook has the JSON). `/readyz` still checks only the database (pg-boss was never added).
+
+### Implementation notes (step 8, mobile readiness)
+- **Audit:** bearer auth (Better Auth `bearer()` plugin, token in the `set-auth-token` header, `SessionGuard` reads `Authorization`) and Expo push (`PushService.sendExpo`, `kind: 'expo'` subscriptions) were already in from steps 2 and 6. They are now tested end to end through the real client against a listening API (`test/mobile.spec.ts`): guest and email-OTP sign-in with no cookie and no `Origin`, guest linking on a device, sign-out then `SESSION_EXPIRED`, validation errors, Expo registration, fan-out to the Expo API, dead-token cleanup, and a transient Expo failure keeping the token.
+- **Fixes:** Expo sends now set `sound` and `priority`, accept a ticket array, treat any other ticket error as a logged failure (not silent success), and add `Authorization` when `EXPO_ACCESS_TOKEN` is set. New env `MOBILE_ORIGINS` (comma list, e.g. `settled://`) adds the app's deep-link scheme to Better Auth's trusted origins; not needed for plain bearer calls. Both are optional and in `render.yaml` / `.env.example`.
+- **OpenAPI:** there was no spec before (the §1 `@nestjs/swagger` idea was not adopted). `src/openapi/build.ts` reads the Nest decorator metadata and the `ZodPipe` schemas, so bodies and queries are exact and cannot drift; it needs no database. `pnpm --filter @settled/api openapi` writes `packages/api-client/openapi.json`; `test/openapi.spec.ts` fails if it is stale (the §12 contract check). `/internal/cron` and the health routes are left out. **Responses are untyped** (`unknown`) because services return plain objects; per-route response schemas are the follow-up. Better Auth's own `/api/auth/*` routes are not in the spec; the client wraps the ones a native app needs.
+- **Package:** `packages/api-client` (`@settled/api-client`): `openapi-typescript` types plus `openapi-fetch` at runtime, a bearer middleware, `ApiError` with the stable error `code`, `unwrap`, `idempotencyKey` and `createAuthApi` (guest, email OTP, Google ID token, sign-out). No TanStack Query hooks are generated (orval was not used); the app wraps calls itself. `private: true` and nothing is published; build, versioning and the consume-from-workspace / tarball / npm options are in the package README. The API's Dockerfile copies its `package.json` only so the lockfile resolves.
+- **Not verifiable here:** a real device token and Expo's live API (tests mock `exp.host`); Google ID-token sign-in on a device; iOS push needs a paid Apple account, so it is out of the zero-cost scope.
 
 ### Still open
 - Official Bit / PayBox payment links (research task, §9.8.1).

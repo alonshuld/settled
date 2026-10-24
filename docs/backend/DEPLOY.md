@@ -51,6 +51,7 @@ Google Cloud console > APIs & Services > Credentials > OAuth client (Web). Autho
 | `GOOGLE_CLIENT_ID/SECRET` | step 5 (optional) |
 | `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET` | step 3 (optional: unset = receipts answer 503) |
 | `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` | step 1 (optional: unset = no web push) |
+| `MOBILE_ORIGINS`, `EXPO_ACCESS_TOKEN` | native app only (optional): deep-link scheme such as `settled://`; Expo push security token (see `packages/api-client/README.md`) |
 
 `NODE_ENV=production` and `PORT=3001` come from the blueprint. Set `AUTH_PHONE_OTP_ENABLED` only if you add an SMS provider (default off).
 3. On start the container runs `prisma migrate deploy` then the server. Render has no free pre-deploy hook, so migrations are part of the start command; a failed migration fails the deploy and the old version keeps serving.

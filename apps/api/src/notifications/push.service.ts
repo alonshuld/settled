@@ -4,6 +4,14 @@ import webpush from 'web-push';
 import type { Env } from '../config/env';
 import { PrismaService } from '../prisma/prisma.service';
 
+const EXPO_PUSH_URL = 'https://exp.host/--/api/v2/push/send';
+
+interface ExpoTicket {
+  status?: 'ok' | 'error';
+  message?: string;
+  details?: { error?: string };
+}
+
 export interface PushMessage {
   title: string;
   body: string;
@@ -16,6 +24,7 @@ export interface PushMessage {
 export class PushService {
   private readonly log = new Logger(PushService.name);
   private readonly vapid: boolean;
+  private readonly expoToken?: string;
 
   constructor(
     config: ConfigService<Env, true>,
@@ -24,6 +33,7 @@ export class PushService {
     const pub = config.get('VAPID_PUBLIC_KEY', { infer: true });
     const priv = config.get('VAPID_PRIVATE_KEY', { infer: true });
     this.vapid = Boolean(pub && priv);
+    this.expoToken = config.get('EXPO_ACCESS_TOKEN', { infer: true });
     if (pub && priv) webpush.setVapidDetails(config.get('VAPID_SUBJECT', { infer: true }), pub, priv);
   }
 
@@ -52,13 +62,22 @@ export class PushService {
   }
 
   private async sendExpo(token: string, msg: PushMessage) {
-    const res = await fetch('https://exp.host/--/api/v2/push/send', {
+    const res = await fetch(EXPO_PUSH_URL, {
       method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ to: token, title: msg.title, body: msg.body, data: { url: msg.url } }),
+      headers: {
+        'content-type': 'application/json',
+        accept: 'application/json',
+        ...(this.expoToken ? { authorization: `Bearer ${this.expoToken}` } : {}),
+      },
+      body: JSON.stringify({ to: token, title: msg.title, body: msg.body, sound: 'default', priority: 'high', data: { url: msg.url } }),
     });
     if (!res.ok) throw Object.assign(new Error(`Expo push failed (${res.status})`), { statusCode: res.status });
-    const json = (await res.json()) as { data?: { status?: string; details?: { error?: string } } };
-    if (json.data?.status === 'error' && json.data.details?.error === 'DeviceNotRegistered') throw new Error('DeviceNotRegistered');
+    // One message in, one ticket out. Tickets only say "accepted"; a dead token is reported here.
+    const json = (await res.json()) as { data?: ExpoTicket | ExpoTicket[] };
+    const ticket = Array.isArray(json.data) ? json.data[0] : json.data;
+    if (ticket?.status === 'error') {
+      if (ticket.details?.error === 'DeviceNotRegistered') throw new Error('DeviceNotRegistered');
+      throw new Error(`Expo rejected the push: ${ticket.message ?? ticket.details?.error ?? 'unknown'}`);
+    }
   }
 }

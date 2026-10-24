@@ -23,7 +23,8 @@ export function createAuth({ prisma, env, email, sms = new NoSmsProvider() }: Au
     // Browsers reach the API through the web app's same-origin proxy, so APP_URL is the public origin.
     baseURL: env.APP_URL,
     secret: env.BETTER_AUTH_SECRET,
-    trustedOrigins: [env.APP_URL],
+    // Native apps send no Origin (bearer token, no cookies); MOBILE_ORIGINS covers deep-link callbacks
+    trustedOrigins: [env.APP_URL, ...env.MOBILE_ORIGINS],
     database: prismaAdapter(prisma, { provider: 'postgresql' }),
     advanced: { database: { generateId: () => crypto.randomUUID() } },
     session: { expiresIn: 30 * DAY, updateAge: DAY },

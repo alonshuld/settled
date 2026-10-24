@@ -22,6 +22,13 @@ const schema = z.object({
   VAPID_PUBLIC_KEY: z.string().optional(),
   VAPID_PRIVATE_KEY: z.string().optional(),
   VAPID_SUBJECT: z.string().default('mailto:admin@settled.local'),
+  // Native app: deep-link schemes / origins Better Auth should trust, comma separated (e.g. `settled://`).
+  MOBILE_ORIGINS: z
+    .string()
+    .default('')
+    .transform((v) => v.split(',').map((o) => o.trim()).filter(Boolean)),
+  // Optional Expo "enhanced push security" token (free; expo.dev > Access tokens). Unset = unauthenticated sends.
+  EXPO_ACCESS_TOKEN: z.string().optional(),
   // Phone OTP is built in step 2 but stays off until an SMS provider exists.
   AUTH_PHONE_OTP_ENABLED: z
     .enum(['true', 'false'])
