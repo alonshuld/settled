@@ -15,6 +15,7 @@ import {
 } from '@/api/settle';
 import { Button } from '@/components/ui/Button';
 import { MemberAvatar } from '@/components/ui/MemberAvatar';
+import { reportError } from '@/lib/errorDialog';
 import { errorCode } from '@/lib/errors';
 import { formatDate, type Lang } from '@/lib/format';
 import { toast } from '@/lib/toast';
@@ -92,7 +93,7 @@ export function RemindPanel({
           const url = handoffUrl(r);
           if (url && isSafeHandoff(url)) window.open(url, '_blank', 'noopener');
         },
-        onError: (e) => (errorCode(e) === 'RATE_LIMITED' ? toast.warn(t('settle.panel.cooldownToast')) : toast.error(e)),
+        onError: (e) => (errorCode(e) === 'RATE_LIMITED' ? toast.warn(t('settle.panel.cooldownToast')) : reportError(e)),
       },
     );
 

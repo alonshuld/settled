@@ -2,6 +2,7 @@ import { MutationCache, QueryCache, QueryClient } from '@tanstack/react-query';
 import { ApiError } from '@settled/api-client';
 import { i18n } from './i18n';
 import { errorCode, isTransient } from './errors';
+import { reportError } from './errorDialog';
 import { toast } from './toast';
 
 declare module '@tanstack/react-query' {
@@ -29,7 +30,7 @@ export const queryClient = new QueryClient({
     onError: (error, _vars, _ctx, mutation) => {
       if (mutation.meta?.silent) return;
       if (errorCode(error) === 'UNAUTHENTICATED') return;
-      toast.error(error);
+      reportError(error, () => mutation.execute(mutation.state.variables));
     },
   }),
 });
