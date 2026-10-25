@@ -22,7 +22,7 @@ function useActive() {
 function Brand() {
   const { t } = useTranslation();
   return (
-    <Link to="/" className="flex items-center gap-2.5 rounded-control">
+    <Link to="/" className="flex min-h-11 items-center gap-2.5 rounded-control">
       <LogoMark />
       <span className="text-xl font-bold tracking-tight">{t('brand')}</span>
     </Link>

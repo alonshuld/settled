@@ -237,7 +237,7 @@ function GroupCardView({ group: g, lang }: { group: GroupCard; lang: Lang }) {
     >
       <span className="flex min-w-0 flex-1 items-center gap-3 md:flex-none md:gap-3.5">
         <GroupTypeIcon type={g.type} size={44} className="md:hidden" />
-        <GroupTypeIcon type={g.type} size={48} className="hidden md:inline-flex" />
+        <GroupTypeIcon type={g.type} size={48} className="max-md:hidden" />
         <span className="flex min-w-0 flex-1 flex-col gap-0.5">
           <span className="truncate text-base font-semibold md:text-lg">{g.name}</span>
           <span className="truncate text-[13px] text-muted md:text-sm">{meta}</span>

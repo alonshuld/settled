@@ -73,7 +73,7 @@ function GroupView({ group }: { group: GroupDetail }) {
         <Link
           to="/"
           aria-label={t('group.back')}
-          className="inline-flex min-h-11 items-center gap-1.5 rounded-control font-medium text-muted hover:text-ink md:pe-2"
+          className="inline-flex min-h-11 min-w-11 items-center gap-1.5 rounded-control font-medium text-muted hover:text-ink md:pe-2"
         >
           <ChevronLeft size={20} className="rtl:-scale-x-100" aria-hidden="true" />
           <span className="hidden md:inline">{t('group.back')}</span>
@@ -89,12 +89,12 @@ function GroupView({ group }: { group: GroupDetail }) {
 
       <section className="flex flex-wrap items-center gap-3.5 md:gap-5">
         <GroupTypeIcon type={group.type} size={56} className="md:hidden" />
-        <GroupTypeIcon type={group.type} size={72} className="hidden md:inline-flex" />
+        <GroupTypeIcon type={group.type} size={72} className="max-md:hidden" />
         <div className="flex min-w-0 flex-1 basis-60 flex-col gap-1 md:gap-2">
           <h1 className="text-[26px] font-bold tracking-tight break-words md:text-4xl">{group.name}</h1>
           <div className="flex flex-wrap items-center gap-x-3.5 gap-y-1 text-[13px] text-muted md:text-[15px]">
             <span>{meta}</span>
-            <span className="hidden md:inline-flex">
+            <span className="max-md:hidden">
               <GroupAvatarStack members={members.map((m) => ({ name: m.displayName, color: m.color }))} size={28} />
             </span>
           </div>
@@ -160,7 +160,7 @@ function GroupView({ group }: { group: GroupDetail }) {
                 type="button"
                 onClick={() => setTab(key)}
                 className={cn(
-                  'min-h-10 flex-1 cursor-pointer rounded-[10px] px-3.5 text-[15px] font-medium md:min-h-12 md:flex-none md:rounded-none md:border-b-2 md:px-1',
+                  'min-h-11 flex-1 cursor-pointer rounded-[10px] px-3.5 text-[15px] font-medium md:min-h-12 md:flex-none md:rounded-none md:border-b-2 md:px-1',
                   tab === key
                     ? 'bg-surface font-semibold text-ink shadow-sm md:border-ink md:bg-transparent md:shadow-none'
                     : 'text-muted hover:text-ink md:border-transparent',

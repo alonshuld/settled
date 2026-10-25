@@ -174,7 +174,7 @@ export function Component() {
           <LoginHeroWide />
         </div>
         <div className="flex min-w-0 flex-1 basis-105 flex-col items-center justify-center gap-8 py-2 md:py-6">
-          <div className="w-full max-w-105 lg:hidden">
+          <div className={cn('w-full max-w-105 lg:hidden', step !== 'start' && 'max-md:hidden')}>
             <LoginHeroCompact />
           </div>
 

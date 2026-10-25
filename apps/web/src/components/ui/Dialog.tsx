@@ -1,6 +1,6 @@
 import * as RD from '@radix-ui/react-dialog';
 import { X } from 'lucide-react';
-import type { ReactNode } from 'react';
+import { useRef, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/cn';
 import { Button, IconButton } from './Button';
@@ -35,6 +35,24 @@ function Header({ title, description }: Pick<BaseProps, 'title' | 'description'>
   );
 }
 
+/**
+ * Radix only restores focus to a `Trigger`; these dialogs are opened from plain buttons, so remember
+ * whatever had focus when `open` flipped and hand it back on close.
+ */
+function useReturnFocus(open: boolean) {
+  const from = useRef<HTMLElement | null>(null);
+  const was = useRef(false);
+  if (open && !was.current) from.current = document.activeElement as HTMLElement | null;
+  was.current = open;
+  return (e: Event) => {
+    const el = from.current;
+    if (el?.isConnected && el !== document.body) {
+      e.preventDefault();
+      el.focus();
+    }
+  };
+}
+
 // Radix warns when a dialog has no Description; an explicit undefined says that is intended.
 const noDescription = (description?: string) => (description ? {} : { 'aria-describedby': undefined });
 
@@ -42,12 +60,13 @@ const overlay = 'fixed inset-0 z-50 bg-black/50 data-[state=open]:animate-fade-u
 
 /** Centered modal (Radix: focus trap, Esc, scroll lock). */
 export function Dialog({ open, onOpenChange, title, description, children, footer, className }: BaseProps) {
+  const returnFocus = useReturnFocus(open);
   return (
     <RD.Root open={open} onOpenChange={onOpenChange}>
       <RD.Portal>
         <RD.Overlay className={overlay} />
         <RD.Content
-         
+          onCloseAutoFocus={returnFocus}
           className={cn(
             'fixed inset-0 z-50 m-auto flex h-fit max-h-[90dvh] w-[calc(100%-2rem)] max-w-md flex-col gap-4 overflow-y-auto rounded-card border border-line bg-surface p-5 shadow-[0_20px_60px_rgba(0,0,0,.3)] data-[state=open]:animate-fade-up',
             className,
@@ -67,12 +86,13 @@ export function Dialog({ open, onOpenChange, title, description, children, foote
  * Add-expense and remind reuse it on phone.
  */
 export function Sheet({ open, onOpenChange, title, description, children, footer, className }: BaseProps) {
+  const returnFocus = useReturnFocus(open);
   return (
     <RD.Root open={open} onOpenChange={onOpenChange}>
       <RD.Portal>
         <RD.Overlay className={overlay} />
         <RD.Content
-         
+          onCloseAutoFocus={returnFocus}
           className={cn(
             'fixed inset-x-0 bottom-0 z-50 flex max-h-[92dvh] flex-col rounded-t-3xl border border-line bg-surface shadow-[0_-10px_40px_rgba(0,0,0,.25)] data-[state=open]:animate-fade-up md:inset-x-auto md:inset-y-0 md:end-0 md:max-h-none md:w-110 md:rounded-none md:rounded-s-3xl',
             className,

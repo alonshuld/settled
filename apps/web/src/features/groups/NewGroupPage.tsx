@@ -157,7 +157,7 @@ export function Component() {
                       aria-pressed={currency === c.code}
                       onClick={() => setCurrency(c.code)}
                       className={cn(
-                        'min-h-10 flex-1 cursor-pointer rounded-[10px] px-3 text-[15px] font-medium',
+                        'min-h-11 flex-1 cursor-pointer rounded-[10px] px-3 text-[15px] font-medium',
                         currency === c.code ? 'bg-surface text-ink shadow-[0_1px_3px_rgba(0,0,0,.12)]' : 'text-muted',
                       )}
                     >

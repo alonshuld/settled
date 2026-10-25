@@ -23,6 +23,7 @@ import { Input, inputClass } from '@/components/ui/Input';
 import { MemberAvatar } from '@/components/ui/MemberAvatar';
 import { PrefControls } from '@/components/ui/PrefControls';
 import { cn } from '@/lib/cn';
+import { reportError } from '@/lib/errorDialog';
 import { errorCode } from '@/lib/errors';
 import {
   buildCreateBody,
@@ -45,7 +46,7 @@ import { ReceiptField } from './ReceiptField';
 const card = 'rounded-card border border-line bg-surface p-5 md:p-7';
 const label = 'text-sm font-medium text-muted';
 const stepper =
-  'inline-flex size-9 flex-none cursor-pointer items-center justify-center rounded-[10px] border border-line bg-surface text-ink hover:bg-surface2';
+  'inline-flex size-11 flex-none cursor-pointer items-center justify-center rounded-[10px] border border-line bg-surface text-ink hover:bg-surface2';
 const QUICK_CURRENCIES = ['ILS', 'EUR', 'USD'];
 const MODES: SplitMode[] = ['equal', 'exact', 'shares'];
 
@@ -144,7 +145,7 @@ export function ExpenseForm({
 
   function onSaveError(err: unknown) {
     if (errorCode(err) === 'VERSION_CONFLICT') setConflict(true);
-    else toast.error(err, { label: t('common.retry'), onClick: () => submit() });
+    else reportError(err, () => submit());
   }
 
   function submit() {
@@ -430,7 +431,7 @@ export function ExpenseForm({
                     aria-pressed={draft.mode === m}
                     onClick={() => patch({ mode: m })}
                     className={cn(
-                      'min-h-10 flex-1 cursor-pointer rounded-[10px] px-3.5 text-[15px] font-medium',
+                      'min-h-11 flex-1 cursor-pointer rounded-[10px] px-3.5 text-[15px] font-medium',
                       draft.mode === m ? 'bg-surface text-ink shadow-[0_1px_3px_rgba(0,0,0,.14)]' : 'text-muted',
                     )}
                   >
