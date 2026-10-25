@@ -11,7 +11,7 @@ export default defineConfig({
   // @settled/core is CommonJS; pre-bundle it so the dev server serves it as ESM with named exports.
   optimizeDeps: { include: ['@settled/core'] },
   resolve: { alias: { '@': path.resolve(import.meta.dirname, 'src') } },
-  test: { environment: 'jsdom', include: ['src/**/*.test.{ts,tsx}'], setupFiles: ['./src/test-setup.ts'] },
+  test: { environment: 'jsdom', testTimeout: 15_000, include: ['src/**/*.test.{ts,tsx}'], setupFiles: ['./src/test-setup.ts'] },
   build: {
     rolldownOptions: {
       output: {

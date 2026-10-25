@@ -1,3 +1,5 @@
+> **Superseded.** This prompt targeted Next.js, next-intl and Auth.js. The app was implemented as a Vite + React SPA in `apps/web` with a NestJS + Better Auth API in `apps/api`. The stack text below is stale; see the READMEs and `docs/backend/`.
+
 Paste this into Claude Code (adjust the stack line if you prefer something else):
 
 ---

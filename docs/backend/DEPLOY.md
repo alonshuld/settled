@@ -57,13 +57,25 @@ Google Cloud console > APIs & Services > Credentials > OAuth client (Web). Autho
 3. On start the container runs `prisma migrate deploy` then the server. Render has no free pre-deploy hook, so migrations are part of the start command; a failed migration fails the deploy and the old version keeps serving.
 4. Note the service URL, e.g. `https://settled-api.onrender.com`. Check `curl $URL/healthz` (`{"status":"ok"}`) and `curl $URL/readyz` (DB reachable).
 
-## 7. Vercel (web)
-Not in this repo yet (`apps/web` is built separately). When it exists, add the rewrite so cookies stay first-party:
-```js
-// next.config.js
-async rewrites() { return [{ source: '/api/:path*', destination: 'https://settled-api.onrender.com/api/:path*' }]; }
-```
-Note: the API serves auth at `/api/auth/*` and the rest under `/api/v1/*`; `/healthz` and `/readyz` are unprefixed. Then set `APP_URL` in Render to the Vercel origin and redeploy the API.
+## 7. Web (`apps/web`, Vite SPA) on Vercel Hobby or Cloudflare Pages
+Pick **one** host; the other host's files are ignored. The browser must reach the API same-origin (`/api/*` proxied to Render) because the API has no CORS and uses cookie sessions. The API serves auth at `/api/auth/*` and the rest under `/api/v1/*`.
+
+### Vercel Hobby (config: `apps/web/vercel.json`)
+1. Add New > Project, import the repo. **Root Directory:** `apps/web` (keep "Include source files outside of the Root Directory" on, the workspace packages are needed).
+2. Framework preset: Other. The settings come from `vercel.json`: install `pnpm install --frozen-lockfile`, build `pnpm --filter @settled/web... build` (the `...` also builds `@settled/core` and `@settled/api-client` first), output `dist`.
+3. `vercel.json` rewrites `/api/:path*` to `https://settled-api.onrender.com/api/:path*` (change the host if your Render service has another name), falls back to `/index.html` for every other path (never for `/api/` or `/assets/`), caches `/assets/*` as immutable and sets `no-cache` on `index.html`, `sw.js` and `manifest.webmanifest`.
+
+### Cloudflare Pages (config: `apps/web/public/_headers`, `_redirects`, `functions/api/[[path]].ts`)
+1. Workers & Pages > Create > Pages > connect the repo. **Root directory:** `apps/web`. **Build command:** `pnpm --filter @settled/web... build` (run from the repo root by Pages; if it runs inside `apps/web`, use `pnpm install --frozen-lockfile && pnpm --filter @settled/web... build`). **Build output directory:** `dist`. Set env var `NODE_VERSION=22`.
+2. `_redirects` only contains the SPA fallback (`/* /index.html 200`). Pages `_redirects` cannot proxy to an external origin, so `/api/*` is proxied by the Pages Function `functions/api/[[path]].ts`, which runs before static assets and redirects. Optional env var `API_ORIGIN` overrides `https://settled-api.onrender.com`. `_headers` sets the same cache rules as Vercel.
+3. Not verified against a live Pages project in this repo (no account used); check `curl -i https://<web>/api/v1/me` returns the API's 401 JSON, not HTML.
+
+### After the web origin exists
+- **Render `APP_URL`** = the web origin (`https://<web>`, no trailing slash), then redeploy the API. Better Auth uses it as base URL and trusted origin and for cookies; a wrong value gives 403 on sign-in.
+- **Google OAuth** authorized redirect URI: `https://<web>/api/auth/callback/google` (step 5).
+- **Web push:** `VAPID_PUBLIC_KEY` on Render is all the web needs; the SPA reads it from the API (`/api/v1/config`) at runtime, there is no build-time web env. Without it the notification opt-in shows as unavailable. iOS only allows push for installed web apps (Add to Home Screen).
+- **R2 CORS** (step 3): add `https://<web>` to `AllowedOrigins`, since browsers PUT receipts directly to R2.
+- **Cold starts:** Render free sleeps after 15 min idle and the first request takes 30-60 s. The cron-job.org job in step 8 (every 5 min) keeps it awake; if you skip it, expect a slow first load and the SPA's offline/error dialog on timeouts.
 
 ## 8. cron-job.org (scheduler and keep-alive)
 Create a free account, then a cronjob:
@@ -87,4 +99,4 @@ curl -i -X POST -H "X-Cron-Secret: $CRON_SECRET" https://settled-api.onrender.co
 - Local image check: `docker build -t settled-api .` then run with `-e` values from `.env.example`.
 
 ## Checklist of manual actions
-Accounts: Supabase, Render, Vercel, Cloudflare (R2), cron-job.org, Resend, Google Cloud (optional). Secrets: step 1 values plus the keys above. GitHub: backup secrets (optional).
+Accounts: Supabase, Render, Vercel or Cloudflare Pages, Cloudflare (R2), cron-job.org, Resend, Google Cloud (optional). Secrets: step 1 values plus the keys above. GitHub: backup secrets (optional).

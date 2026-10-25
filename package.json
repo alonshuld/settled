@@ -9,8 +9,9 @@
     "build": "pnpm -r build",
     "test": "pnpm -r test",
     "typecheck": "pnpm -r typecheck",
-    "db:up": "docker compose up -d",
-    "db:down": "docker compose down"
+    "db:up": "docker compose up -d postgres mailpit",
+    "db:down": "docker compose down",
+    "seed": "pnpm --filter @settled/api seed"
   },
   "devDependencies": {
     "vite-plus": "^1.4.0"

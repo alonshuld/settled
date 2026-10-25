@@ -1,0 +1,2 @@
+# Cloudflare Pages only. /api/* is handled by functions/api/[[path]].ts, which runs before static assets and redirects.
+/* /index.html 200

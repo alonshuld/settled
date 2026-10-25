@@ -83,6 +83,11 @@ async function makeGroup(opts: {
 }
 
 async function main() {
+  // Member FKs are RESTRICT, so a cascade from Group can hit a Member before its dependents; clear those first.
+  await prisma.expenseShare.deleteMany();
+  await prisma.reminder.deleteMany();
+  await prisma.settlement.deleteMany();
+  await prisma.activity.deleteMany();
   await prisma.group.deleteMany();
   await prisma.user.deleteMany({ where: { id: 'seed-alon' } });
   const alon = await prisma.user.create({
