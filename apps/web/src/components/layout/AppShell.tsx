@@ -1,6 +1,7 @@
 import { Bell, Plus, Users, UserRound } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Link, Outlet, useLocation } from 'react-router';
+import { useActivityCounts } from '@/api/activity';
 import { Avatar } from '@/components/ui/Avatar';
 import { LogoMark } from '@/components/ui/Logo';
 import { PrefControls } from '@/components/ui/PrefControls';
@@ -39,29 +40,31 @@ export function AppShell() {
   const ownBottomBar = focusPage || /^\/groups\/(?!new\/?$)[^/]+\/?$/.test(pathname);
   const { data } = useSession();
   const name = data?.user.name || data?.user.email || '';
+  const unread = useActivityCounts().data?.unread ?? 0;
 
   const navItems = [
     { to: '/', label: t('nav.groups'), on: active.groups, Icon: Users },
-    { to: '/activity', label: t('nav.activity'), on: active.activity, Icon: Bell },
+    { to: '/activity', label: t('nav.activity'), on: active.activity, Icon: Bell, badge: unread },
   ];
-  const settings = { to: '/settings', label: t('nav.settings'), on: active.settings, Icon: UserRound };
+  const settings = { to: '/settings', label: t('nav.settings'), on: active.settings, Icon: UserRound, badge: 0 };
 
   return (
     <div className="flex min-h-dvh flex-col bg-bg">
       <header className={cn('flex items-center gap-x-5 border-b border-line bg-surface px-4 py-2.5 md:px-8 md:py-3.5', focusPage && 'max-md:hidden')}>
         <Brand />
         <nav aria-label={t('nav.main')} className="hidden gap-1 md:flex">
-          {[...navItems, settings].map(({ to, label, on }) => (
+          {[...navItems, settings].map(({ to, label, on, badge }) => (
             <Link
               key={to}
               to={to}
               aria-current={on ? 'page' : undefined}
               className={cn(
-                'inline-flex min-h-11 items-center rounded-[10px] px-3.5 font-medium',
+                'inline-flex min-h-11 items-center gap-2 rounded-[10px] px-3.5 font-medium',
                 on ? 'bg-surface2 text-ink' : 'text-muted hover:text-ink',
               )}
             >
               {label}
+              <Badge count={badge} />
             </Link>
           ))}
         </nav>
@@ -81,8 +84,8 @@ export function AppShell() {
         hidden={ownBottomBar}
         className="fixed inset-x-0 bottom-0 z-40 flex items-center border-t border-line bg-surface px-3 pt-1.5 pb-[max(1.5rem,env(safe-area-inset-bottom))] md:hidden"
       >
-        {[navItems[0]!, navItems[1]!].map(({ to, label, on, Icon }) => (
-          <TabLink key={to} to={to} label={label} on={on} Icon={Icon} />
+        {[navItems[0]!, navItems[1]!].map(({ to, label, on, Icon, badge }) => (
+          <TabLink key={to} to={to} label={label} on={on} Icon={Icon} badge={badge} />
         ))}
         <Link
           to="/groups/new"
@@ -97,18 +100,36 @@ export function AppShell() {
   );
 }
 
-function TabLink({ to, label, on, Icon }: { to: string; label: string; on: boolean; Icon: typeof Users }) {
+function Badge({ count, floating }: { count?: number; floating?: boolean }) {
+  const { t } = useTranslation();
+  if (!count) return null;
+  return (
+    <span
+      role="img"
+      aria-label={t('activity.unreadBadge', { count })}
+      className={cn(
+        'inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-neg px-1.5 text-[11px] font-bold text-bg',
+        floating && 'absolute -top-1 start-1/2 ms-1.5',
+      )}
+    >
+      {count > 99 ? '99+' : count}
+    </span>
+  );
+}
+
+function TabLink({ to, label, on, Icon, badge }: { to: string; label: string; on: boolean; Icon: typeof Users; badge?: number }) {
   return (
     <Link
       to={to}
       aria-current={on ? 'page' : undefined}
       className={cn(
-        'flex min-h-14 flex-1 flex-col items-center justify-center gap-1 text-[11px] font-medium',
+        'relative flex min-h-14 flex-1 flex-col items-center justify-center gap-1 text-[11px] font-medium',
         on ? 'text-ink' : 'text-muted',
       )}
     >
       <Icon size={22} strokeWidth={on ? 2 : 1.8} aria-hidden="true" />
       {label}
+      <Badge count={badge} floating />
     </Link>
   );
 }

@@ -1,11 +1,14 @@
 import { Bell, Link2, Plus, Users } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
+import { useRecentActivity } from '@/api/activity';
 import { useDashboard, type AttentionItem, type CurrencyTotal, type Dashboard, type GroupCard } from '@/api/groups';
 import { buttonClass } from '@/components/ui/Button';
 import { GroupAvatarStack, MemberAvatar } from '@/components/ui/MemberAvatar';
 import { GroupTypeIcon } from '@/components/ui/GroupTypeIcon';
+import { Skeleton } from '@/components/ui/Skeleton';
 import { EmptyState, ErrorState } from '@/components/ui/States';
+import { ActivityRow } from '@/features/activity/ActivityRow';
 import { HomeLoadingBody } from '@/features/shell/HomeLoading';
 import { useSession } from '@/lib/auth';
 import { cn } from '@/lib/cn';
@@ -116,8 +119,9 @@ export function Component() {
               </ul>
             </section>
 
-            <aside className="hidden min-w-0 flex-[1_1_320px] md:block">
+            <aside className="hidden min-w-0 flex-[1_1_320px] flex-col gap-4 md:flex">
               <Attention items={d.needsAttention} lang={lang} />
+              <RecentActivity />
             </aside>
           </div>
         </>
@@ -319,6 +323,34 @@ function Attention({
           </div>
         );
       })}
+    </section>
+  );
+}
+
+function RecentActivity() {
+  const { t } = useTranslation();
+  const q = useRecentActivity(5);
+  return (
+    <section aria-labelledby="recent-h" className={`${card} flex flex-col gap-2 p-4`}>
+      <div className="flex items-center justify-between gap-3 px-1.5 pt-1.5">
+        <h2 id="recent-h" className="text-lg font-semibold">
+          {t('activity.recent')}
+        </h2>
+        <Link to="/activity" className="inline-flex min-h-11 items-center text-sm font-semibold">
+          {t('activity.seeAll')}
+        </Link>
+      </div>
+      {q.isPending ? (
+        <Skeleton className="mx-1.5 mb-2 h-32 rounded-[14px]" />
+      ) : q.isError || q.data.items.length === 0 ? (
+        <p className="px-1.5 pb-2 text-sm text-muted">{t('activity.recentEmpty')}</p>
+      ) : (
+        <ul className="flex flex-col">
+          {q.data.items.map((it) => (
+            <ActivityRow key={it.id} item={it} section="compact" compact />
+          ))}
+        </ul>
+      )}
     </section>
   );
 }

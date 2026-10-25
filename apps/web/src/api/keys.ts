@@ -13,7 +13,9 @@ export const qk = {
   me: {
     all: ['me'] as const,
     dashboard: () => ['me', 'dashboard'] as const,
+    profile: () => ['me', 'profile'] as const,
     stats: () => ['me', 'stats'] as const,
+    prefs: () => ['me', 'notification-prefs'] as const,
     paymentDetails: () => ['me', 'payment-details'] as const,
   },
   groups: {
@@ -32,6 +34,7 @@ export const qk = {
     all: ['activity'] as const,
     list: (filter?: string) => ['activity', 'list', filter ?? 'all'] as const,
     counts: () => ['activity', 'counts'] as const,
+    recent: () => ['activity', 'recent'] as const,
   },
   fx: {
     currencies: () => ['fx', 'currencies'] as const,
