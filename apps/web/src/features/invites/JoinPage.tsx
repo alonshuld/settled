@@ -33,7 +33,7 @@ export function Component() {
   return (
     <div className="flex min-h-dvh flex-col bg-bg">
       <header className="flex items-center gap-3 px-5 py-4 md:px-8 md:py-5">
-        <Link to="/" className="flex items-center gap-2.5 rounded-control">
+        <Link to="/" className="flex min-h-11 items-center gap-2.5 rounded-control">
           <LogoMark />
           <span className="text-xl font-bold tracking-tight">{t('brand')}</span>
         </Link>
