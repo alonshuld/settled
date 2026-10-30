@@ -47,4 +47,4 @@ docker compose up -d postgres mailpit   # from the repo root (pnpm db:up)
 # run the API on :3001 (cp apps/api/.env.example apps/api/.env; pnpm --filter @settled/api dev)
 pnpm --filter @settled/web test:e2e     # starts `pnpm dev` itself if :3000 is free
 ```
-No Playwright browser download available? Set `CHROMIUM_PATH` to a system Chromium. CI does not run e2e.
+No Playwright browser download available? Set `CHROMIUM_PATH` to a system Chromium. CI runs it in the `e2e` job (`.github/workflows/ci.yml`).
