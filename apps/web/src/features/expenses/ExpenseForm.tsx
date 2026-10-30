@@ -401,6 +401,7 @@ export function ExpenseForm({
                 <Input
                   id="dt"
                   type="date"
+                  className="min-w-0 appearance-none"
                   value={draft.date}
                   aria-invalid={!!show(errs.date)}
                   onChange={(e) => patch({ date: e.target.value })}

@@ -3,6 +3,7 @@ import { ArrowLeft, CalendarDays, Plus, X } from 'lucide-react';
 import { useMemo, useRef, useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router';
+import { useConfig } from '@/api/config';
 import { GROUP_TYPES, useCreateGroupMutation, useCurrencies, type CreateGroupBody, type GroupType } from '@/api/groups';
 import { Button, buttonClass } from '@/components/ui/Button';
 import { GroupTypeIcon } from '@/components/ui/GroupTypeIcon';
@@ -26,6 +27,8 @@ export function Component() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const { data: session } = useSession();
+  const emailOn = useConfig().data?.auth.emailOtp ?? false;
+  const addPh = t(emailOn ? 'newGroup.addPh' : 'newGroup.addPhNoEmail');
   const currencies = useCurrencies();
   const create = useCreateGroupMutation();
 
@@ -182,29 +185,34 @@ export function Component() {
                 )}
               </fieldset>
 
-              <div className="flex min-w-60 flex-1 flex-col gap-2">
+              <div className="flex min-w-0 flex-[1_1_15rem] flex-col gap-2">
                 <span className={label}>
                   <CalendarDays size={14} className="me-1.5 inline align-[-2px]" aria-hidden="true" />
                   {t('newGroup.dates')}
                 </span>
-                <div className="flex gap-2">
-                  <Input
-                    type="date"
-                    aria-label={t('newGroup.startDate')}
-                    value={startDate}
-                    max={endDate || undefined}
-                    onChange={(e) => setStartDate(e.target.value)}
-                    className="min-w-0"
-                  />
-                  <Input
-                    type="date"
-                    aria-label={t('newGroup.endDate')}
-                    value={endDate}
-                    min={startDate || undefined}
-                    aria-invalid={!!errors.dates}
-                    onChange={(e) => setEndDate(e.target.value)}
-                    className="min-w-0"
-                  />
+                {/* Stacked on phone: native date inputs (iOS especially) won't shrink enough to sit side by side */}
+                <div className="grid gap-2 sm:grid-cols-2">
+                  <label className="flex min-w-0 flex-col gap-1">
+                    <span className="text-[13px] text-muted">{t('newGroup.from')}</span>
+                    <Input
+                      type="date"
+                      value={startDate}
+                      max={endDate || undefined}
+                      onChange={(e) => setStartDate(e.target.value)}
+                      className="min-w-0 appearance-none"
+                    />
+                  </label>
+                  <label className="flex min-w-0 flex-col gap-1">
+                    <span className="text-[13px] text-muted">{t('newGroup.to')}</span>
+                    <Input
+                      type="date"
+                      value={endDate}
+                      min={startDate || undefined}
+                      aria-invalid={!!errors.dates}
+                      onChange={(e) => setEndDate(e.target.value)}
+                      className="min-w-0 appearance-none"
+                    />
+                  </label>
                 </div>
                 {errors.dates && (
                   <p role="alert" className="text-sm text-neg">
@@ -222,10 +230,10 @@ export function Component() {
             </div>
             <div className="flex gap-2.5">
               <Input
-                aria-label={t('newGroup.addPh')}
+                aria-label={addPh}
                 value={draft}
                 maxLength={120}
-                placeholder={t('newGroup.addPh')}
+                placeholder={addPh}
                 onChange={(e) => setDraft(e.target.value)}
                 onKeyDown={(e) => {
                   // Enter adds a member instead of submitting the whole form.

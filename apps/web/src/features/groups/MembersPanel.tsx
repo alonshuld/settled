@@ -11,6 +11,7 @@ import {
   type GroupDetail,
   type GroupMemberView,
 } from '@/api/groupDetail';
+import { useConfig } from '@/api/config';
 import { Button, IconButton } from '@/components/ui/Button';
 import { ConfirmDialog, Dialog } from '@/components/ui/Dialog';
 import { Input } from '@/components/ui/Input';
@@ -222,6 +223,7 @@ function AddDialog({
   loading: boolean;
 }) {
   const { t } = useTranslation();
+  const emailOn = useConfig().data?.auth.emailOtp ?? false;
   const [value, setValue] = useState('');
   const [invalid, setInvalid] = useState(false);
 
@@ -236,14 +238,14 @@ function AddDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={(o) => !o && onClose()} title={t('group.members.addTitle')} description={t('group.members.addHint')}>
+    <Dialog open={open} onOpenChange={(o) => !o && onClose()} title={t('group.members.addTitle')} description={t(emailOn ? 'group.members.addHint' : 'group.members.addHintNoEmail')}>
       <form onSubmit={submit} className="flex flex-col gap-3" noValidate>
         <Input
           autoFocus
           value={value}
           onChange={(e) => setValue(e.target.value)}
-          placeholder={t('group.members.addPh')}
-          aria-label={t('group.members.addPh')}
+          placeholder={t(emailOn ? 'group.members.addPh' : 'group.members.addPhNoEmail')}
+          aria-label={t(emailOn ? 'group.members.addPh' : 'group.members.addPhNoEmail')}
           aria-invalid={invalid || undefined}
           maxLength={120}
         />

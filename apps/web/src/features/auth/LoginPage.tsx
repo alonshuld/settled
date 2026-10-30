@@ -184,7 +184,9 @@ export function Component() {
               <>
                 <div className="flex flex-col gap-2.5">
                   <h2 className="text-[34px] font-bold tracking-tight">{t('login.welcome')}</h2>
-                  <p className="text-base leading-normal text-muted">{t('login.welcomeSub')}</p>
+                  <p className="text-base leading-normal text-muted">
+                    {t(hasOtp ? 'login.welcomeSub' : auth?.google ? 'login.welcomeSubGoogle' : 'login.welcomeSubGuest')}
+                  </p>
                 </div>
 
                 {auth?.google && (

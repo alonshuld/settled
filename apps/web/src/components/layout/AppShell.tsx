@@ -1,4 +1,4 @@
-import { Bell, LogOut, Plus, Users, UserRound } from 'lucide-react';
+import { Bell, LogOut, Plus, QrCode, Users, UserRound } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router';
@@ -13,7 +13,7 @@ import { cn } from '@/lib/cn';
 import { useSession } from '@/lib/auth';
 import { useSignOut } from '@/features/auth/useSignOut';
 
-const GROUP_PATHS = ['/groups', '/j/'];
+const GROUP_PATHS = ['/groups'];
 
 function useActive() {
   const { pathname } = useLocation();
@@ -34,7 +34,7 @@ function Brand() {
   );
 }
 
-/** Header nav on desktop; bottom tab bar (Groups / Activity / + / Settings) below `md`, per the phone boards. */
+/** Header nav on desktop; bottom tab bar below `md`: Groups / Activity / + / Join / Settings, five equal slots so + sits in the middle. */
 export function AppShell() {
   const { t } = useTranslation();
   const active = useActive();
@@ -90,13 +90,16 @@ export function AppShell() {
         {[navItems[0]!, navItems[1]!].map(({ to, label, on, Icon, badge }) => (
           <TabLink key={to} to={to} label={label} on={on} Icon={Icon} badge={badge} />
         ))}
-        <Link
-          to="/groups/new"
-          aria-label={t('nav.newGroup')}
-          className="-mt-6.5 flex size-15 flex-none items-center justify-center rounded-[20px] bg-accent text-accent-ink shadow-[0_8px_20px_rgba(0,0,0,.18)]"
-        >
-          <Plus size={26} strokeWidth={2.4} aria-hidden="true" />
-        </Link>
+        <div className="flex flex-1 justify-center">
+          <Link
+            to="/groups/new"
+            aria-label={t('nav.newGroup')}
+            className="-mt-6.5 flex size-15 flex-none items-center justify-center rounded-[20px] bg-accent text-accent-ink shadow-[0_8px_20px_rgba(0,0,0,.18)]"
+          >
+            <Plus size={26} strokeWidth={2.4} aria-hidden="true" />
+          </Link>
+        </div>
+        <TabLink to="/j" label={t('nav.join')} on={false} Icon={QrCode} />
         <TabLink to={settings.to} label={settings.label} on={settings.on} Icon={settings.Icon} />
       </nav>
     </div>

@@ -140,6 +140,8 @@ function InviteCard({ code, data }: { code: string; data: InvitePreview }) {
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const { data: session, isPending: sessionPending } = useSession();
+  const { data: config } = useConfig();
+  const auth = config?.auth;
   const join = useJoinMutation(code);
 
   const { group, invitedBy, claimable } = data;
@@ -231,7 +233,11 @@ function InviteCard({ code, data }: { code: string; data: InvitePreview }) {
           {session ? (join.isPending ? t('join.joining') : chosen ? t('join.joinAs', { name: chosen.displayName }) : t('join.join')) : t('join.signIn')}
         </Button>
         {!session && !sessionPending && <GuestButton />}
-        {!session && !sessionPending && <p className="text-center text-[13px] text-muted">{t('join.signInNote')}</p>}
+        {!session && !sessionPending && (
+          <p className="text-center text-[13px] text-muted">
+            {t(auth?.emailOtp || auth?.phoneOtp ? 'join.signInNote' : auth?.google ? 'join.signInNoteGoogle' : 'join.signInNoteGuest')}
+          </p>
+        )}
       </div>
     </>
   );
