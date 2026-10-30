@@ -17,7 +17,14 @@ const preview = {
 const mutate = vi.fn();
 let session: unknown = null;
 
-vi.mock('@/lib/auth', () => ({ useSession: () => ({ data: session, isPending: false }) }));
+const anonymous = vi.fn();
+
+vi.mock('@/lib/auth', () => ({
+  useSession: () => ({ data: session, isPending: false }),
+  authClient: { signIn: { anonymous: (...a: unknown[]) => anonymous(...a) } },
+  resetSessionData: vi.fn(),
+}));
+vi.mock('@/api/config', () => ({ useConfig: () => ({ data: { auth: { guest: true } } }) }));
 vi.mock('@/api/groups', () => ({
   useInvitePreview: () => ({ isPending: false, isError: false, data: preview }),
   useJoinMutation: () => ({ mutate, isPending: false }),
@@ -44,6 +51,7 @@ const where = () => screen.getByTestId('where').textContent;
 describe('JoinPage', () => {
   beforeEach(async () => {
     mutate.mockReset();
+    anonymous.mockReset();
     session = null;
     await i18n.changeLanguage('en');
   });
@@ -52,6 +60,15 @@ describe('JoinPage', () => {
     setup('/j');
     expect(screen.getByLabelText('Invite code')).toBeInTheDocument();
     expect(screen.queryByText('Crete trip')).not.toBeInTheDocument();
+  });
+
+  it('offers a back link and guest entry on the code screen', async () => {
+    const user = userEvent.setup();
+    anonymous.mockResolvedValue({ error: null });
+    setup('/j');
+    expect(screen.getByRole('link', { name: 'Back' })).toHaveAttribute('href', '/login');
+    await user.click(screen.getByRole('button', { name: 'Continue as guest' }));
+    expect(anonymous).toHaveBeenCalledTimes(1);
   });
 
   it('rejects a malformed code and opens a valid one', async () => {

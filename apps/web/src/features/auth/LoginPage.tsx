@@ -14,6 +14,7 @@ import { errorCode, errorMessage } from '@/lib/errors';
 import { safeNext } from '@/lib/nav';
 import { isEmail, maskPhone, toE164 } from '@/lib/phone';
 import { toast } from '@/lib/toast';
+import { useGuestSignIn } from './useGuestSignIn';
 import { LoginHeroCompact, LoginHeroWide } from './LoginHero';
 import { OTP_LENGTH, OtpInput } from './OtpInput';
 import { OtpStep } from './OtpStep';
@@ -29,6 +30,7 @@ export function Component() {
   const next = safeNext(params.get('next'));
   const { data: config } = useConfig();
   const { data: session } = useSession();
+  const guestSignIn = useGuestSignIn();
 
   const auth = config?.auth;
   const methods: Method[] = [...(auth?.emailOtp ? (['email'] as const) : []), ...(auth?.phoneOtp ? (['phone'] as const) : [])];
@@ -147,12 +149,11 @@ export function Component() {
   async function guest() {
     setBusy('guest');
     setStartError(null);
-    const res = await authClient.signIn.anonymous();
-    if (res.error) {
+    const error = await guestSignIn();
+    if (error) {
       setBusy(null);
-      return setStartError(errorMessage(t, res.error));
+      return setStartError(error);
     }
-    resetSessionData();
     navigate(next, { replace: true });
   }
 

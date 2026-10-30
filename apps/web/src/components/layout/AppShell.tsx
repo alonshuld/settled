@@ -1,12 +1,17 @@
-import { Bell, Plus, Users, UserRound } from 'lucide-react';
+import { Bell, LogOut, Plus, Users, UserRound } from 'lucide-react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link, Outlet, useLocation } from 'react-router';
+import { Link, Outlet, useLocation, useNavigate } from 'react-router';
 import { useActivityCounts } from '@/api/activity';
+import { useMe } from '@/api/me';
 import { Avatar } from '@/components/ui/Avatar';
+import { ConfirmDialog } from '@/components/ui/Dialog';
 import { LogoMark } from '@/components/ui/Logo';
+import { Menu, MenuContent, MenuItem, MenuLabel, MenuSeparator, MenuTrigger } from '@/components/ui/Menu';
 import { PrefControls } from '@/components/ui/PrefControls';
 import { cn } from '@/lib/cn';
 import { useSession } from '@/lib/auth';
+import { useSignOut } from '@/features/auth/useSignOut';
 
 const GROUP_PATHS = ['/groups', '/j/'];
 
@@ -70,9 +75,7 @@ export function AppShell() {
         </nav>
         <div className="flex-1" />
         <PrefControls />
-        <Link to="/settings" aria-label={t('common.profile')} className="hidden rounded-full md:inline-flex">
-          <Avatar name={name} self size={44} />
-        </Link>
+        <UserMenu name={name} />
       </header>
 
       <main className="flex-1 pb-24 md:pb-0">
@@ -97,6 +100,47 @@ export function AppShell() {
         <TabLink to={settings.to} label={settings.label} on={settings.on} Icon={settings.Icon} />
       </nav>
     </div>
+  );
+}
+
+/** Avatar menu: Settings and Sign out (guests confirm first, since their groups live only on this device). */
+function UserMenu({ name }: { name: string }) {
+  const { t } = useTranslation();
+  const navigate = useNavigate();
+  const { data: me } = useMe();
+  const { out, busy } = useSignOut();
+  const [confirm, setConfirm] = useState(false);
+
+  return (
+    <>
+      <Menu>
+        <MenuTrigger aria-label={t('common.profile')} className="inline-flex cursor-pointer rounded-full">
+          <Avatar name={name} self size={44} />
+        </MenuTrigger>
+        <MenuContent>
+          <MenuLabel>{name}</MenuLabel>
+          <MenuSeparator />
+          <MenuItem onSelect={() => navigate('/settings')}>
+            <UserRound size={18} aria-hidden="true" />
+            {t('nav.settings')}
+          </MenuItem>
+          <MenuItem onSelect={() => (me?.isGuest ? setConfirm(true) : void out())}>
+            <LogOut size={18} aria-hidden="true" className="rtl:-scale-x-100" />
+            {t('settings.signOut')}
+          </MenuItem>
+        </MenuContent>
+      </Menu>
+      <ConfirmDialog
+        open={confirm}
+        onOpenChange={setConfirm}
+        title={t('settings.signOutGuestTitle')}
+        description={t('settings.signOutGuestBody')}
+        confirmLabel={t('settings.signOut')}
+        danger
+        loading={busy}
+        onConfirm={() => void out()}
+      />
+    </>
   );
 }
 

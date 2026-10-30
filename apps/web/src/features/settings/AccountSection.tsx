@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router';
+import { useSignOut } from '@/features/auth/useSignOut';
 import { useDeleteAccountMutation, type Me } from '@/api/me';
 import { Button } from '@/components/ui/Button';
 import { ConfirmDialog, Dialog } from '@/components/ui/Dialog';
 import { Input } from '@/components/ui/Input';
-import { authClient, resetSessionData, signOut } from '@/lib/auth';
-import { toast } from '@/lib/toast';
+import { authClient, resetSessionData } from '@/lib/auth';
 import { sectionCard } from './controls';
 import { refreshSession } from './ProfileSection';
 
@@ -14,21 +14,9 @@ const WORD = 'DELETE';
 
 export function AccountSection({ me }: { me: Me | undefined }) {
   const { t } = useTranslation();
-  const navigate = useNavigate();
   const [confirmOut, setConfirmOut] = useState(false);
   const [deleting, setDeleting] = useState(false);
-  const [busy, setBusy] = useState(false);
-
-  async function out() {
-    setBusy(true);
-    try {
-      await signOut();
-      navigate('/login', { replace: true });
-    } catch (e) {
-      setBusy(false);
-      toast.error(e);
-    }
-  }
+  const { out, busy } = useSignOut();
 
   return (
     <section id="account" aria-labelledby="account-h" className={`${sectionCard} flex flex-wrap items-center gap-3`}>

@@ -1,9 +1,10 @@
 import { ApiError } from '@settled/api-client';
 import { formatInviteCode, parseInviteCode } from '@settled/core';
-import { Plus, QrCode } from 'lucide-react';
+import { ArrowLeft, Plus, QrCode } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router';
+import { useConfig } from '@/api/config';
 import { useInvitePreview, useJoinMutation, type InvitePreview } from '@/api/groups';
 import { qk } from '@/api/keys';
 import { Button, buttonClass } from '@/components/ui/Button';
@@ -20,6 +21,7 @@ import { errorCode, isTransient } from '@/lib/errors';
 import { formatDateRange, formatMoney, type Lang } from '@/lib/format';
 import { queryClient } from '@/lib/query';
 import { loginPath } from '@/lib/nav';
+import { useGuestSignIn } from '@/features/auth/useGuestSignIn';
 
 const NEW = 'new';
 const card = 'rounded-card border border-line bg-surface';
@@ -96,6 +98,39 @@ function BadInvite({ error, onRetry, retrying }: { error: unknown; onRetry: () =
         </Link>
       }
     />
+  );
+}
+
+/** "Continue as guest" for signed-out visitors, when the server allows it. On an invite the page stays put and the button flips to Join; on the bare code screen `onDone` leaves for home. */
+function GuestButton({ className, onDone }: { className?: string; onDone?: () => void }) {
+  const { t } = useTranslation();
+  const { data: config } = useConfig();
+  const { data: session, isPending } = useSession();
+  const guestSignIn = useGuestSignIn();
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  if (!config?.auth.guest || isPending || session) return null;
+
+  async function go() {
+    setBusy(true);
+    setError(null);
+    const err = await guestSignIn();
+    setBusy(false);
+    if (err) setError(err);
+    else onDone?.();
+  }
+
+  return (
+    <div className={cn('flex flex-col items-center gap-2', className)}>
+      <Button variant="text" className="text-[15px] font-medium text-muted" loading={busy} onClick={go}>
+        {t('login.guest')}
+      </Button>
+      {error && (
+        <p role="alert" className="text-sm text-neg">
+          {error}
+        </p>
+      )}
+    </div>
   );
 }
 
@@ -195,6 +230,7 @@ function InviteCard({ code, data }: { code: string; data: InvitePreview }) {
         <Button size="lg" loading={join.isPending || sessionPending} disabled={!ready} onClick={go}>
           {session ? (join.isPending ? t('join.joining') : chosen ? t('join.joinAs', { name: chosen.displayName }) : t('join.join')) : t('join.signIn')}
         </Button>
+        {!session && !sessionPending && <GuestButton />}
         {!session && !sessionPending && <p className="text-center text-[13px] text-muted">{t('join.signInNote')}</p>}
       </div>
     </>
@@ -220,6 +256,7 @@ function WhoButton({ on, onClick, children }: { on: boolean; onClick: () => void
 function CodeEntry({ initial, wide }: { initial: string; wide: boolean }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const { data: session } = useSession();
   const [value, setValue] = useState(initial);
   const [error, setError] = useState(false);
 
@@ -233,6 +270,15 @@ function CodeEntry({ initial, wide }: { initial: string; wide: boolean }) {
 
   return (
     <aside className={cn('flex min-w-0 flex-col gap-4', wide ? 'mx-auto w-full max-w-md' : 'flex-[1_1_340px]')}>
+      {wide && (
+        <Link
+          to={session ? '/' : '/login'}
+          className="inline-flex min-h-11 items-center gap-1.5 self-start rounded-control font-medium text-muted hover:text-ink"
+        >
+          <ArrowLeft size={18} aria-hidden="true" className="rtl:-scale-x-100" />
+          {t('common.back')}
+        </Link>
+      )}
       <form onSubmit={submit} noValidate className={cn(card, 'flex flex-col gap-4.5 p-6 md:p-7')}>
         <h2 className="text-xl font-semibold">{wide ? t('join.title') : t('join.codeTitle')}</h2>
         <p className="text-sm leading-normal text-muted">{t('join.codeSub')}</p>
@@ -266,6 +312,7 @@ function CodeEntry({ initial, wide }: { initial: string; wide: boolean }) {
           {t('join.find')}
         </Button>
       </form>
+      {wide && <GuestButton onDone={() => navigate('/', { replace: true })} />}
       <div className={cn(card, 'flex items-center gap-4 p-6')}>
         <span className="inline-flex size-12 flex-none items-center justify-center rounded-[14px] bg-surface2">
           <QrCode size={22} aria-hidden="true" />
