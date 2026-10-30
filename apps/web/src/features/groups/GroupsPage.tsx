@@ -53,7 +53,7 @@ export function Component() {
           </h1>
         </div>
         <div className="hidden gap-2.5 md:flex">
-          <Link to="/j" className={buttonClass('ghost')}>
+          <Link to="/join" className={buttonClass('ghost')}>
             <Link2 size={18} aria-hidden="true" />
             {t('home.join')}
           </Link>
@@ -75,7 +75,7 @@ export function Component() {
                 <Plus size={18} strokeWidth={2.2} aria-hidden="true" />
                 {t('home.newGroup')}
               </Link>
-              <Link to="/j" className={buttonClass('ghost')}>
+              <Link to="/join" className={buttonClass('ghost')}>
                 <Link2 size={18} aria-hidden="true" />
                 {t('home.join')}
               </Link>
@@ -94,7 +94,7 @@ export function Component() {
                   {t('home.groups')}
                 </h2>
                 <span className="hidden text-sm text-muted md:inline">{t('home.activeCount', { count: active })}</span>
-                <Link to="/j" className="inline-flex min-h-11 items-center text-sm font-semibold md:hidden">
+                <Link to="/join" className="inline-flex min-h-11 items-center text-sm font-semibold md:hidden">
                   {t('home.join')}
                 </Link>
               </div>

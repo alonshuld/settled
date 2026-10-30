@@ -27,10 +27,9 @@ const NEW = 'new';
 const card = 'rounded-card border border-line bg-surface';
 
 /** Public route: previews the invite signed out, and sends the visitor through /login and back to join. */
+/** Public page for invite links (`/j/:code?`): works before sign-in, so it brings its own header. */
 export function Component() {
   const { t } = useTranslation();
-  const { code: param } = useParams();
-  const code = param ? parseInviteCode(param) : null;
 
   return (
     <div className="flex min-h-dvh flex-col bg-bg">
@@ -42,15 +41,27 @@ export function Component() {
         <div className="flex-1" />
         <PrefControls />
       </header>
+      <JoinContent />
+    </div>
+  );
+}
 
-      <main className="mx-auto flex w-full max-w-280 flex-1 flex-wrap items-start gap-6 px-5 pt-2 pb-12 md:px-8 md:pt-4">
-        {param ? (
-          <section aria-live="polite" className={cn(card, 'flex min-w-0 flex-[999_1_520px] flex-col gap-7 p-6 md:p-9')}>
-            {code ? <Invite code={code} /> : <BadInvite error={new ApiError(404, 'INVITE_NOT_FOUND', '')} onRetry={() => {}} />}
-          </section>
-        ) : null}
-        <CodeEntry initial={param ?? ''} wide={!param} />
-      </main>
+/**
+ * Invite preview plus code entry. `inShell` is the signed-in Join tab (`/join/:code?`) inside the app shell:
+ * no back link, and codes stay under `/join` so the tab bar remains.
+ */
+export function JoinContent({ inShell = false }: { inShell?: boolean }) {
+  const { code: param } = useParams();
+  const code = param ? parseInviteCode(param) : null;
+
+  return (
+    <div className="mx-auto flex w-full max-w-280 flex-1 flex-wrap items-start gap-6 px-5 pt-2 pb-12 md:px-8 md:pt-4">
+      {param ? (
+        <section aria-live="polite" className={cn(card, 'flex min-w-0 flex-[999_1_520px] flex-col gap-7 p-6 md:p-9')}>
+          {code ? <Invite code={code} /> : <BadInvite error={new ApiError(404, 'INVITE_NOT_FOUND', '')} onRetry={() => {}} />}
+        </section>
+      ) : null}
+      <CodeEntry initial={param ?? ''} wide={!param} inShell={inShell} />
     </div>
   );
 }
@@ -259,7 +270,7 @@ function WhoButton({ on, onClick, children }: { on: boolean; onClick: () => void
   );
 }
 
-function CodeEntry({ initial, wide }: { initial: string; wide: boolean }) {
+function CodeEntry({ initial, wide, inShell }: { initial: string; wide: boolean; inShell: boolean }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { data: session } = useSession();
@@ -271,12 +282,12 @@ function CodeEntry({ initial, wide }: { initial: string; wide: boolean }) {
     const code = parseInviteCode(value);
     if (!code) return setError(true);
     setError(false);
-    navigate(`/j/${formatInviteCode(code)}`);
+    navigate(`${inShell ? '/join' : '/j'}/${formatInviteCode(code)}`);
   }
 
   return (
     <aside className={cn('flex min-w-0 flex-col gap-4', wide ? 'mx-auto w-full max-w-md' : 'flex-[1_1_340px]')}>
-      {wide && (
+      {wide && !inShell && (
         <Link
           to={session ? '/' : '/login'}
           className="inline-flex min-h-11 items-center gap-1.5 self-start rounded-control font-medium text-muted hover:text-ink"

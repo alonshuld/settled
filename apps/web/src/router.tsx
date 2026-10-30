@@ -37,6 +37,7 @@ export const routes: RouteObject[] = [
               { path: 'groups/:id/expenses/new', ...lazy(() => import('@/features/expenses/AddExpensePage'), 'titles.addExpense') },
               { path: 'groups/:id/expenses/:eid/edit', ...lazy(() => import('@/features/expenses/AddExpensePage'), 'titles.editExpense') },
               { path: 'groups/:id/settle', ...lazy(() => import('@/features/settle/SettlePage'), 'titles.settle') },
+              { path: 'join/:code?', ...lazy(() => import('@/features/invites/JoinTab'), 'titles.join') },
               { path: 'activity', ...lazy(() => import('@/features/activity/ActivityPage'), 'titles.activity') },
               { path: 'settings', ...lazy(() => import('@/features/settings/SettingsPage'), 'titles.settings') },
               { path: '*', element: <NotFound />, handle: { title: 'titles.notFound' } satisfies RouteHandle },

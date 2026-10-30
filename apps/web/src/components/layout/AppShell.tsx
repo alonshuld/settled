@@ -20,6 +20,7 @@ function useActive() {
   return {
     groups: pathname === '/' || GROUP_PATHS.some((p) => pathname.startsWith(p)),
     activity: pathname.startsWith('/activity'),
+    join: pathname.startsWith('/join'),
     settings: pathname.startsWith('/settings'),
   };
 }
@@ -99,7 +100,7 @@ export function AppShell() {
             <Plus size={26} strokeWidth={2.4} aria-hidden="true" />
           </Link>
         </div>
-        <TabLink to="/j" label={t('nav.join')} on={false} Icon={QrCode} />
+        <TabLink to="/join" label={t('nav.join')} on={active.join} Icon={QrCode} />
         <TabLink to={settings.to} label={settings.label} on={settings.on} Icon={settings.Icon} />
       </nav>
     </div>
