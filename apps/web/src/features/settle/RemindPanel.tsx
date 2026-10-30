@@ -3,6 +3,7 @@ import type { ReminderTone } from '@settled/core';
 import { Check, Send } from 'lucide-react';
 import { useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useConfig } from '@/api/config';
 import type { GroupDetail } from '@/api/groupDetail';
 import {
   useReminderHistory,
@@ -51,7 +52,8 @@ export function RemindPanel({
   const members = memberMap(group);
   const me = members.get(transfer.toMemberId);
   const debtor = members.get(transfer.fromMemberId);
-  const available = channelAvailability(debtor);
+  const { data: config } = useConfig();
+  const available = channelAvailability(debtor, config?.reminderChannels);
 
   const [tone, setTone] = useState<ReminderTone>('friendly');
   const [channel, setChannel] = useState<ReminderChannel>(() => firstAvailable(available) ?? 'email');

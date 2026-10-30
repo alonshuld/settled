@@ -32,8 +32,10 @@ npx web-push generate-vapid-keys   # VAPID_PUBLIC_KEY / VAPID_PRIVATE_KEY
 Add custom domains / `http://localhost:3000` as extra origins if needed.
 4. Optional: a second private bucket for DB backups (step 9).
 
-## 4. Resend (email OTP, reminders)
-Create an API key (`RESEND_API_KEY`). Without a verified domain Resend only sends from `onboarding@resend.dev` and only to your own address; verify a domain to email real users, then set `EMAIL_FROM`. Without `RESEND_API_KEY` the API tries Mailpit and email will fail in prod.
+## 4. Resend (email OTP, reminders) — optional, skip for now
+**Without `RESEND_API_KEY` in production, email is off:** the login screen offers Google and guest only, the email OTP endpoint is not mounted, email is dropped from reminder channels (existing email auto-repeats stop) and the weekly digest goes by push only. Add the key later and redeploy to turn it on.
+
+Create an API key (`RESEND_API_KEY`). Without a verified domain Resend only sends from `onboarding@resend.dev` and only to your own address; verify a domain to email real users, then set `EMAIL_FROM`.
 
 ## 5. Google sign-in
 Google Cloud console > APIs & Services > Credentials > OAuth client (Web). Authorized redirect URI: `https://YOUR-APP.vercel.app/api/auth/callback/google` (the web app proxies `/api/*`, so the callback goes through Vercel). Gives `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET`. Optional: without them Google login is simply off.
@@ -47,7 +49,7 @@ Google Cloud console > APIs & Services > Credentials > OAuth client (Web). Autho
 | `DATABASE_URL` | Supabase session pooler URI (step 2) |
 | `APP_URL` | Public web origin, e.g. `https://YOUR-APP.vercel.app` (no trailing slash) |
 | `CRON_SECRET` / `BETTER_AUTH_SECRET` | step 1 |
-| `RESEND_API_KEY`, `EMAIL_FROM` | step 4 |
+| `RESEND_API_KEY`, `EMAIL_FROM` | step 4 (optional: unset = no email in production) |
 | `GOOGLE_CLIENT_ID/SECRET` | step 5 (optional) |
 | `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET` | step 3 (optional: unset = receipts answer 503) |
 | `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` | step 1 (optional: unset = no web push) |

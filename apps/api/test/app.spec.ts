@@ -6,7 +6,7 @@ import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vite-plus/test';
 import { AppModule } from '../src/app.module';
 import { AppError } from '../src/common/errors';
-import { validateEnv } from '../src/config/env';
+import { emailEnabled, validateEnv } from '../src/config/env';
 import { configureApp } from '../src/setup';
 import { Public } from '../src/common/decorators';
 
@@ -75,5 +75,10 @@ describe('env', () => {
   });
   it('defaults phone OTP off', () => {
     expect(validateEnv({ DATABASE_URL: 'x', CRON_SECRET: 'a'.repeat(16), BETTER_AUTH_SECRET: 'a'.repeat(32) }).AUTH_PHONE_OTP_ENABLED).toBe(false);
+  });
+  it('turns email off in production without Resend', () => {
+    expect(emailEnabled({ NODE_ENV: 'production', RESEND_API_KEY: undefined })).toBe(false);
+    expect(emailEnabled({ NODE_ENV: 'production', RESEND_API_KEY: 're_x' })).toBe(true);
+    expect(emailEnabled({ NODE_ENV: 'development', RESEND_API_KEY: undefined })).toBe(true);
   });
 });

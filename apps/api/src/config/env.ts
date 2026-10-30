@@ -38,6 +38,11 @@ const schema = z.object({
 
 export type Env = z.infer<typeof schema>;
 
+/** Email (login codes, reminders, digest) needs Resend in production; dev and test fall back to Mailpit. */
+export function emailEnabled(env: Pick<Env, 'NODE_ENV' | 'RESEND_API_KEY'>): boolean {
+  return Boolean(env.RESEND_API_KEY) || env.NODE_ENV !== 'production';
+}
+
 export function validateEnv(raw: Record<string, unknown>): Env {
   const parsed = schema.safeParse(raw);
   if (!parsed.success) {

@@ -1,5 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { formatMoney, simplifyDebts } from '@settled/core';
+import { emailEnabled, type Env } from '../config/env';
 import { BalancesService } from '../groups/balances.service';
 import { EmailService } from '../email/email.service';
 import { PushService } from '../notifications/push.service';
@@ -11,13 +13,17 @@ type Locale = 'he' | 'en';
 @Injectable()
 export class DigestService {
   private readonly log = new Logger(DigestService.name);
+  private readonly emailOn: boolean;
 
   constructor(
     private readonly prisma: PrismaService,
     private readonly balances: BalancesService,
     private readonly email: EmailService,
     private readonly push: PushService,
-  ) {}
+    config: ConfigService<Env, true>,
+  ) {
+    this.emailOn = emailEnabled({ NODE_ENV: config.get('NODE_ENV', { infer: true }), RESEND_API_KEY: config.get('RESEND_API_KEY', { infer: true }) });
+  }
 
   async run(): Promise<{ sent: number; skipped: number; failed: number }> {
     const users = await this.prisma.user.findMany({
@@ -69,7 +75,7 @@ export class DigestService {
     const title = he ? 'הסיכום השבועי שלך בשולם' : 'Your weekly Shulam summary';
     const text = `${he ? `היי ${u.name}, כך זה נראה השבוע:` : `Hi ${u.name}, here is where things stand:`}\n\n${lines.join('\n')}`;
     const tasks: Promise<unknown>[] = [this.push.send(u.id, { title, body: lines.length === 1 ? lines[0]! : he ? `${lines.length} חובות פתוחים` : `${lines.length} open balances`, url: '/' })];
-    if (u.email && !u.isAnonymous) tasks.push(this.email.send({ to: u.email, subject: title, text }));
+    if (this.emailOn && u.email && !u.isAnonymous) tasks.push(this.email.send({ to: u.email, subject: title, text }));
     const results = await Promise.allSettled(tasks);
     const rejected = results.find((r) => r.status === 'rejected');
     if (rejected && results.every((r) => r.status === 'rejected')) throw (rejected as PromiseRejectedResult).reason;

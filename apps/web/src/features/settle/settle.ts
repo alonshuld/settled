@@ -67,9 +67,14 @@ export function sortTransfers(list: SettleTransfer[], meId: string | undefined):
  * Which channels can reach this person. Joined members have a hidden contact set (the server decides, and answers
  * REMINDER_CHANNEL_UNAVAILABLE), so only placeholders - whose email/phone we hold - are narrowed down.
  */
-export function channelAvailability(m: Pick<GroupMemberView, 'isPlaceholder' | 'email' | 'phone'> | undefined): Record<ReminderChannel, boolean> {
-  if (!m || !m.isPlaceholder) return { whatsapp: true, sms: true, email: true, push: true };
-  return { whatsapp: !!m.phone, sms: !!m.phone, email: !!m.email, push: false };
+/** `enabled` is the server's `config.reminderChannels` (email is off in production without Resend). */
+export function channelAvailability(
+  m: Pick<GroupMemberView, 'isPlaceholder' | 'email' | 'phone'> | undefined,
+  enabled?: readonly ReminderChannel[],
+): Record<ReminderChannel, boolean> {
+  const av = !m || !m.isPlaceholder ? { whatsapp: true, sms: true, email: true, push: true } : { whatsapp: !!m.phone, sms: !!m.phone, email: !!m.email, push: false };
+  if (enabled) for (const c of CHANNELS) av[c] &&= enabled.includes(c);
+  return av;
 }
 
 export const firstAvailable = (av: Record<ReminderChannel, boolean>): ReminderChannel | null => CHANNELS.find((c) => av[c]) ?? null;

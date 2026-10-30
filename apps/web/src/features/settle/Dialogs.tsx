@@ -3,6 +3,7 @@ import type { PayOption, ReminderTone } from '@settled/core';
 import { Copy, ExternalLink } from 'lucide-react';
 import { useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useConfig } from '@/api/config';
 import type { GroupDetail } from '@/api/groupDetail';
 import { usePutPaymentDetailsMutation, type MyPaymentDetails } from '@/api/me';
 import {
@@ -244,17 +245,19 @@ export function RemindAllDialog({
   const [auto, setAuto] = useState(true);
   const key = useRef(idempotencyKey());
   const all = useRemindAllMutation(group.id);
+  const { data: config } = useConfig();
+  const enabled = config?.reminderChannels;
 
   // A channel is offered if it can reach at least one of the people being reminded
   const available = useMemo(() => {
     const members = memberMap(group);
     const merged = { whatsapp: false, sms: false, email: false, push: false };
     for (const x of owedToMe) {
-      const a = channelAvailability(members.get(x.fromMemberId));
+      const a = channelAvailability(members.get(x.fromMemberId), enabled);
       for (const c of Object.keys(merged) as ReminderChannel[]) merged[c] ||= a[c];
     }
     return merged;
-  }, [group, owedToMe]);
+  }, [group, owedToMe, enabled]);
 
   const send = () =>
     all.mutate(

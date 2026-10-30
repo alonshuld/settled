@@ -2,7 +2,7 @@ import { PrismaClient } from '@prisma/client';
 import { betterAuth } from 'better-auth';
 import { prismaAdapter } from 'better-auth/adapters/prisma';
 import { anonymous, bearer, emailOTP, phoneNumber } from 'better-auth/plugins';
-import type { Env } from '../config/env';
+import { emailEnabled, type Env } from '../config/env';
 import type { EmailService } from '../email/email.service';
 import { mergeGuestInto } from './guest-merge';
 import { NoSmsProvider, type SmsProvider } from './sms.provider';
@@ -34,14 +34,18 @@ export function createAuth({ prisma, env, email, sms = new NoSmsProvider() }: Au
       : {},
     plugins: [
       bearer(),
-      emailOTP({
-        otpLength: 6,
-        expiresIn: 600,
-        allowedAttempts: 3,
-        sendVerificationOTP: async ({ email: to, otp }) => {
-          await email.sendLoginCode(to, otp);
-        },
-      }),
+      ...(emailEnabled(env)
+        ? [
+            emailOTP({
+              otpLength: 6,
+              expiresIn: 600,
+              allowedAttempts: 3,
+              sendVerificationOTP: async ({ email: to, otp }) => {
+                await email.sendLoginCode(to, otp);
+              },
+            }),
+          ]
+        : []),
       anonymous({
         emailDomainName: 'guest.shulam.app',
         onLinkAccount: async ({ anonymousUser, newUser }) => {

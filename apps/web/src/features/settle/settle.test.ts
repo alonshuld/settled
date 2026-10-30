@@ -83,6 +83,16 @@ describe('channels', () => {
     });
   });
 
+  it('drops channels the server has turned off', () => {
+    expect(channelAvailability(undefined, ['push', 'whatsapp', 'sms']).email).toBe(false);
+    expect(channelAvailability({ isPlaceholder: true, email: 'a@b.co', phone: '+972501234567' }, ['push', 'whatsapp', 'sms'])).toEqual({
+      whatsapp: true,
+      sms: true,
+      email: false,
+      push: false,
+    });
+  });
+
   it('picks the first reachable channel', () => {
     expect(firstAvailable({ whatsapp: false, sms: false, email: true, push: false })).toBe('email');
     expect(firstAvailable({ whatsapp: false, sms: false, email: false, push: false })).toBeNull();

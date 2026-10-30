@@ -1,8 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { Prisma, type Reminder, type ReminderChannel, type ReminderTone } from '@prisma/client';
 import { appendPaymentDetails, renderReminder, smsLink, whatsappLink } from '@settled/core';
 import type { GroupMember } from '../common/decorators';
 import { AppError } from '../common/errors';
+import { emailEnabled, type Env } from '../config/env';
 import { EmailService } from '../email/email.service';
 import { BalancesService } from '../groups/balances.service';
 import { NotificationsService } from '../notifications/notifications.service';
@@ -55,13 +57,17 @@ const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
 @Injectable()
 export class RemindersService {
   private readonly log = new Logger(RemindersService.name);
+  private readonly emailOn: boolean;
 
   constructor(
     private readonly prisma: PrismaService,
     private readonly balances: BalancesService,
     private readonly email: EmailService,
     private readonly notifications: NotificationsService,
-  ) {}
+    config: ConfigService<Env, true>,
+  ) {
+    this.emailOn = emailEnabled({ NODE_ENV: config.get('NODE_ENV', { infer: true }), RESEND_API_KEY: config.get('RESEND_API_KEY', { infer: true }) });
+  }
 
   view(r: Reminder, link?: string | null) {
     const out = {
@@ -237,7 +243,7 @@ export class RemindersService {
     if (!prepared) {
       const debtor = group.members.find((m) => m.id === input.toMemberId);
       throw new AppError('REMINDER_CHANNEL_UNAVAILABLE', 422, 'This person cannot be reached that way', {
-        alternatives: debtor ? availableChannels(debtor) : [],
+        alternatives: debtor ? availableChannels(debtor, this.emailOn) : [],
       });
     }
     const created = await this.prisma.transaction((tx) => this.commit(tx, prepared));
@@ -290,7 +296,7 @@ export class RemindersService {
     const debtor = group.members.find((m) => m.id === input.toMemberId && m.leftAt === null);
     if (!debtor) throw new AppError('VALIDATION_FAILED', 400, 'Not an active member', { fields: { toMemberId: ['Not an active member'] } });
     if (debtor.id === creditor.id) throw new AppError('VALIDATION_FAILED', 400, 'Cannot remind yourself', { fields: { toMemberId: ['Not allowed'] } });
-    if (!availableChannels(debtor).includes(input.channel)) return null;
+    if (!availableChannels(debtor, this.emailOn).includes(input.channel)) return null;
 
     const owner = group.members.find((m) => m.role === 'owner');
     const locale = debtor.user?.locale ?? owner?.user?.locale ?? 'he';
@@ -416,11 +422,11 @@ export class RemindersService {
   }
 }
 
-/** Channels that work for this recipient right now (design §9.9). */
-export function availableChannels(m: GroupMemberRow): ReminderChannel[] {
+/** Channels that work for this recipient right now (design §9.9). `emailOn` is false in production without Resend. */
+export function availableChannels(m: GroupMemberRow, emailOn = true): ReminderChannel[] {
   const out: ReminderChannel[] = [];
   if (m.user && !m.user.deletedAt) out.push('push');
-  if ((m.user?.email && !m.user.isAnonymous) || m.inviteEmail) out.push('email');
+  if (emailOn && ((m.user?.email && !m.user.isAnonymous) || m.inviteEmail)) out.push('email');
   if (m.user?.contactPhone || m.invitePhone) out.push('whatsapp', 'sms');
   return out;
 }
