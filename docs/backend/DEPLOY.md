@@ -85,7 +85,7 @@ Create a free account, then a cronjob:
 - Schedule: every 5 minutes
 - Advanced > Request method: **POST**
 - Headers: `X-Cron-Secret: <CRON_SECRET>`
-- Timeout: 60 s (a cold start can take 30-60 s); enable failure notifications.
+- Timeout: 30 s (the free plan maximum). A cold start can take longer and log one failed run; the next run hits a warm instance. Enable failure notifications.
 
 Expected response: `200 {"ran":[...]}`; a wrong secret gives `401`. This one job also keeps Render awake and Supabase from pausing. Quick test:
 ```
